@@ -113,6 +113,7 @@ Create a namespace `injectors`, where you will deploy the CyberArk Sidecar Injec
     ```bash
     ~$ cat deployment/mutatingwebhook.yaml | \
         deployment/webhook-patch-ca-bundle.sh \
+          --namespace-selector-label cyberark-sidecar-injector \
           --service cyberark-sidecar-injector \
           --namespace injectors > \
         deployment/mutatingwebhook-ca-bundle.yaml

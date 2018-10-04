@@ -1,6 +1,6 @@
 # cyberark-sidecar-injector
 
-CyberArk Broker Sidecar Injector is a [MutatingAdmissionWebhook](https://kubernetes.io/docs/admin/admission-controllers/#mutatingadmissionwebhook-beta-in-19) server which injects configurable sidecar container(s) into a pod prior to persistence of the underlying object.
+CyberArk Sidecar Injector is a [MutatingAdmissionWebhook](https://kubernetes.io/docs/admin/admission-controllers/#mutatingadmissionwebhook-beta-in-19) server which allows for configurable sidecar injection into a pod prior to persistence.
 
   * [TL;DR;](#tl-dr-)
   * [Introduction](#introduction)
@@ -92,6 +92,7 @@ The following table lists the configurable parameters of the CyberArk Sidecar In
 
 | Parameter                     | Description                                     | Default                                                    |
 | -----------------------       | ---------------------------------------------   | ---------------------------------------------------------- |
+| `namespaceSelectorLabel`        | Label which should be set to "enabled" for namespace to use Sidecar Injector | `cyberark-sidecar-injector` (required)                                           |
 | `caBundle`        | CA certificate bundle that signs the server cert used by the webhook  | `nil` (required)                                           |
 | `csrEnabled`       | Generate a private key and certificate signing request towards the Kubernetes Cluster                   | `true`                        |
 | `certsSecret`       | Private key and signed certificate used by the webhook server             | `nil` (required if csrEnabled is false)                |

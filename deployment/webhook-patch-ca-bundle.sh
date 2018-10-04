@@ -12,14 +12,19 @@ usage: ${0} [OPTIONS]
 
 The following flags are required.
 
-       --service          Service name of webhook.
-       --namespace        Namespace where webhook service resides.
+       --service                         Service name of webhook.
+       --namespace                       Namespace where webhook service resides.
+       --namespace-selector-label        Label which should be set to "enabled" for namespace to use Sidecar Injector.
 EOF
     exit 1
 }
 
 while [[ $# -gt 0 ]]; do
     case ${1} in
+        --namespace-selector-label)
+            namespaceSelectorLabel="$2"
+            shift
+            ;;
         --service)
             service="$2"
             shift
@@ -35,7 +40,7 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
-if [ -z ${service} ] || [ -z ${namespace} ]
+if [ -z ${service} ] || [ -z ${namespace} ] || [ -z ${namespaceSelectorLabel} ]
 then
     usage
 fi
@@ -53,6 +58,7 @@ if command -v envsubst >/dev/null 2>&1; then
 else
     sed \
         -e "s|\${CA_BUNDLE}|${CA_BUNDLE}|g" \
+        -e "s|\${namespaceSelectorLabel}|${namespaceSelectorLabel}|g" \
         -e "s|\${namespace}|${namespace}|g" \
         -e "s|\${service}|${service}|g"
 fi

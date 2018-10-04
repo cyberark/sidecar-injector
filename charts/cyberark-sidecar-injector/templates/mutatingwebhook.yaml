@@ -22,4 +22,4 @@ webhooks:
         resources: ["pods"]
     namespaceSelector:
       matchLabels:
-        cyberark-sidecar-injector: enabled
+        {{ (required "A valid .Values.namespaceSelectorLabel entry required!" .Values.namespaceSelectorLabel) }}: enabled

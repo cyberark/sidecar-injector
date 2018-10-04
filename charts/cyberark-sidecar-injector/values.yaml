@@ -12,4 +12,5 @@ fullnameOverride: ""
 
 # caBundle:
 csrEnabled: true
+namespaceSelectorLabel: cyberark-sidecar-injector
 # certsSecret:
