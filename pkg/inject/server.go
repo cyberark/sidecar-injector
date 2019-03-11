@@ -1,19 +1,19 @@
 package inject
 
 import (
-	"fmt"
-	"net/http"
-	"io/ioutil"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
 
 	"github.com/golang/glog"
+	"k8s.io/api/admission/v1beta1"
 	admissionregistrationv1beta1 "k8s.io/api/admissionregistration/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/kubernetes/pkg/apis/core/v1"
-	"k8s.io/api/admission/v1beta1"
 )
 
 var (
@@ -24,7 +24,6 @@ var (
 	// (https://github.com/kubernetes/kubernetes/issues/57982)
 	defaulter = runtime.ObjectDefaulter(runtimeScheme)
 )
-
 
 func init() {
 	_ = corev1.AddToScheme(runtimeScheme)
@@ -61,12 +60,12 @@ type WebhookServerParameters struct {
 }
 
 func failWithResponse(errMsg string) *v1beta1.AdmissionResponse {
-    glog.Infof(errMsg)
-    return &v1beta1.AdmissionResponse{
-        Result: &metav1.Status{
-            Message: errMsg,
-        },
-    }
+	glog.Infof(errMsg)
+	return &v1beta1.AdmissionResponse{
+		Result: &metav1.Status{
+			Message: errMsg,
+		},
+	}
 }
 
 // main mutation process
@@ -88,15 +87,16 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 		}
 	}
 
-    injectType, err := getAnnotation(&pod.ObjectMeta, annotationInjectTypeKey)
-    containerMode, err := getAnnotation(&pod.ObjectMeta, annotationContainerModeKey)
-    containerName, err := getAnnotation(&pod.ObjectMeta, annotationContainerNameKey)
+	injectType, err := getAnnotation(&pod.ObjectMeta, annotationInjectTypeKey)
+	containerMode, err := getAnnotation(&pod.ObjectMeta, annotationContainerModeKey)
+	containerName, err := getAnnotation(&pod.ObjectMeta, annotationContainerNameKey)
 
 
-    var sidecarConfig *PatchConfig
-    switch injectType {
-    case "secretless":
-        secretlessConfigMapName, err := getAnnotation(&pod.ObjectMeta, annotationSecretlessConfigKey)
+	var sidecarConfig *PatchConfig
+	switch injectType {
+	case "secretless":
+
+		secretlessConfig, err := getAnnotation(&pod.ObjectMeta, annotationSecretlessConfigKey)
         if err != nil {
             return failWithResponse(fmt.Sprintf("Mutation failed for pod %s, in namespace %s, due to %s", pod.Name, req.Namespace, err.Error()))
         }
@@ -104,12 +104,18 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
         conjurConnConfigMapName, _ := getAnnotation(&pod.ObjectMeta, annotationConjurConnConfigKey)
         conjurAuthConfigMapName, _ := getAnnotation(&pod.ObjectMeta, annotationConjurAuthConfigKey)
 
-        sidecarConfig = generateSecretlessSidecarConfig(
-            secretlessConfigMapName,
-            conjurConnConfigMapName,
-            conjurAuthConfigMapName)
-        break;
-    case "authenticator":
+		ServiceAccountTokenVolumeName, err := getServiceAccountTokenVolumeName(&pod)
+		if err != nil {
+			return failWithResponse(fmt.Sprintf("Mutation failed for pod %s, in namespace %s, due to %s", pod.Name, req.Namespace, err.Error()))
+		}
+
+		sidecarConfig = generateSecretlessSidecarConfig(
+			secretlessConfig,
+			conjurConnConfigMapName,
+			conjurAuthConfigMapName,
+			ServiceAccountTokenVolumeName)
+		break
+	case "authenticator":
         conjurAuthConfigMapName, err := getAnnotation(&pod.ObjectMeta, annotationConjurAuthConfigKey)
         if err != nil {
             return failWithResponse(fmt.Sprintf("Mutation failed for pod %s, in namespace %s, due to %s", pod.Name, req.Namespace, err.Error()))
@@ -134,15 +140,15 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
             containerName:           containerName,
         })
         break;
-    default:
-        errMsg := fmt.Sprintf("Mutation failed for pod %s, in namespace %s, due to invalid inject type annotation value = %s", pod.Name, req.Namespace, injectType)
-        glog.Infof(errMsg)
-        return &v1beta1.AdmissionResponse{
-            Result: &metav1.Status{
-                Message: errMsg,
-            },
-        }
-    }
+	default:
+		errMsg := fmt.Sprintf("Mutation failed for pod %s, in namespace %s, due to invalid inject type annotation value = %s", pod.Name, req.Namespace, injectType)
+		glog.Infof(errMsg)
+		return &v1beta1.AdmissionResponse{
+			Result: &metav1.Status{
+				Message: errMsg,
+			},
+		}
+	}
 
 	// Workaround: https://github.com/kubernetes/kubernetes/issues/57982
 	applyDefaultsWorkaround(sidecarConfig.Containers, sidecarConfig.Volumes)
@@ -192,6 +198,7 @@ func (whsvr *WebhookServer) Serve(w http.ResponseWriter, r *http.Request) {
 
 	var admissionResponse *v1beta1.AdmissionResponse
 	ar := v1beta1.AdmissionReview{}
+	//Object, *schema.GroupVersionKind, error
 	if _, _, err := deserializer.Decode(body, nil, &ar); err != nil {
 		glog.Errorf("could not decode body: %v", err)
 		admissionResponse = &v1beta1.AdmissionResponse{

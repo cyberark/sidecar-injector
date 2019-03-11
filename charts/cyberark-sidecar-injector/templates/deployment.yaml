@@ -125,7 +125,7 @@ spec:
 {{- end }}
       containers:
         - name: cyberark-sidecar-injector
-          image: cyberark/sidecar-injector:latest
+          image: {{ .Values.SidecarInjectorImage }}
           imagePullPolicy: Always
           args:
             - -tlsCertFile=/etc/webhook/certs/cert.pem
@@ -134,6 +134,9 @@ spec:
             - -alsologtostderr
             - -v=4
             - 2>&1
+          env:
+            - name: SECRETLESS_CRD_SUFFIX
+              value: "{{ .Values.SECRETLESS_CRD_SUFFIX }}"
           ports:
             - containerPort: 8080
               name: https

@@ -1,0 +1,60 @@
+#!/bin/bash
+
+# Run tests for cyberark sidecar-injector.
+# These tests currently exercise the secrectless broker sidecar.
+
+set -euo pipefail
+cd "$(dirname "$0")"
+
+. tests/utils
+
+# Set environment variables
+UNIQUE_TEST_ID="$(uuidgen | tr "[:upper:]" "[:lower:]" | head -c 6 | tr -d -)"
+export UNIQUE_TEST_ID
+export SECRETLESS_CRD_SUFFIX="${UNIQUE_TEST_ID}"
+export SECRETLESS_CRD_SUFFIX
+export SIDECAR_IMAGE="${DOCKER_REGISTRY_PATH}/sidecar-injector:${UNIQUE_TEST_ID}"
+export SECRETLESS_IMAGE="cyberark/secretless-broker"
+export TEST_NAMESPACE="sci-${UNIQUE_TEST_ID}"
+
+
+
+function testInjection() {
+    runDockerCommand "
+    set -x
+# push the local sidecar-injector image to the remote DOCKER_REGISTRY_PATH
+docker tag 'sidecar-injector:latest' '${SIDECAR_IMAGE}' > /dev/null;
+docker push '${SIDECAR_IMAGE}' > /dev/null;
+
+export SECRETLESS_CRD_SUFFIX='${UNIQUE_TEST_ID}';
+
+# create test namespace
+kubectl create namespace '${TEST_NAMESPACE}'
+
+# switch to test namespace
+kubens '${TEST_NAMESPACE}'
+
+# run CRD tests
+cd tests;
+export SIDECAR_IMAGE='${SIDECAR_IMAGE}';
+./tests_within_docker
+"
+}
+
+function main() {
+    announce 'Build Sidecar Injector Image'
+    ./bin/build latest
+
+    docker inspect sidecar-injector:latest >/dev/null 2>&1 || {
+        echo "ERROR: sidecar-injector:latest must exist locally for test to run."
+        exit 1
+    }
+
+    announce 'Build Test Execution Docker Image'
+    prepareTestEnvironment
+
+    announce 'Test Sidecar Injection with Secretless configured via CRD'
+    testInjection
+}
+
+main

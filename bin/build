@@ -4,12 +4,8 @@
 # usage: ./bin/build
 set -ex
 
-if [ -z "$1" ]
-then
-    echo "tag not provided";
-    exit 1;
-fi
+tag="${1:-latest}"
 
-cd $(dirname $0)/..
+cd "$(dirname "${0}")"/..
 
-docker build -t cyberark/sidecar-injector:$1 .
+docker build -t cyberark/sidecar-injector:"${tag}" -t sidecar-injector:"${tag}" .

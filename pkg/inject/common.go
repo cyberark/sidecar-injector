@@ -1,6 +1,7 @@
 package inject
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -43,7 +44,7 @@ func envVarFromConfigMap(envVarName, configMapName string) corev1.EnvVar {
 
 			ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
 				LocalObjectReference: corev1.LocalObjectReference{
-					Name:  configMapName,
+					Name: configMapName,
 				},
 				Key: envVarName,
 			},
@@ -53,12 +54,19 @@ func envVarFromConfigMap(envVarName, configMapName string) corev1.EnvVar {
 
 func envVarFromFieldPath(envVarName, fieldPath string) corev1.EnvVar {
 	return corev1.EnvVar{
-		Name:      envVarName,
+		Name: envVarName,
 		ValueFrom: &corev1.EnvVarSource{
-			FieldRef:    &corev1.ObjectFieldSelector{
-				FieldPath:  fieldPath,
+			FieldRef: &corev1.ObjectFieldSelector{
+				FieldPath: fieldPath,
 			},
 		},
+	}
+}
+
+func envVarFromLiteral(envVarName, value string) corev1.EnvVar {
+	return corev1.EnvVar {
+		Name: envVarName,
+		Value: value,
 	}
 }
 
@@ -73,4 +81,22 @@ func getAnnotation(metadata *metav1.ObjectMeta, key string) (string, error) {
 		return "", fmt.Errorf("missing annotation %s", key)
 	}
 	return value, nil
+}
+
+/**
+ * Given a pod, return the name of the volume that contains
+ * the service account token. VolumeMounts are used instead
+ * of volumes so that the mount path can be matched on.
+ * Otherwise a name pattern match would be required and
+ * that could have unexpected results.
+ */
+func getServiceAccountTokenVolumeName(pod *corev1.Pod) (string, error) {
+	for _, container := range pod.Spec.Containers {
+		for _, volumeMount := range container.VolumeMounts {
+			if volumeMount.MountPath == "/var/run/secrets/kubernetes.io/serviceaccount" {
+				return volumeMount.Name, nil
+			}
+		}
+	}
+	return "", errors.New("Service account token volume mount not found")
 }
