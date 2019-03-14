@@ -53,5 +53,3 @@ k8s.io/apiserver v0.0.0-20180313225939-8e2fdf029740 h1:YhjoFQiohhg+UC/eeSeYexQXK
 k8s.io/apiserver v0.0.0-20180313225939-8e2fdf029740/go.mod h1:6bqaTSOSJavUIXUtfaR9Os9JtTCm8ZqH2SUl2S60C4w=
 k8s.io/kube-openapi v0.0.0-20180216212618-50ae88d24ede h1:YOWlONzJUq456SnNYPcK/org5asA+LU6AzNBm+l/04o=
 k8s.io/kube-openapi v0.0.0-20180216212618-50ae88d24ede/go.mod h1:BXM9ceUBTj2QnfH2MK1odQs778ajze1RxcmP6S8RVVc=
-k8s.io/kubernetes v1.9.4 h1:p4vySVm1b0KNdK+mJkGglI5eK9wa0Nf70II64DRzozs=
-k8s.io/kubernetes v1.9.4/go.mod h1:ocZa8+6APFNC2tX1DZASIbocyYT5jHzqFVsY5aoB7Jk=
