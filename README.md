@@ -1,5 +1,15 @@
 # CyberArk Sidecar Injector
 
+***
+
+**Status**: Beta
+
+The CyberArk Sidecar Injector is currently in beta.
+
+Naming and functionality are still subject to *breaking* changes.
+
+***
+
 This document shows how to deploy and use the CyberArk Sidecar Injector [MutatingAdmissionWebhook](https://kubernetes.io/docs/admin/admission-controllers/#mutatingadmissionwebhook-beta-in-19) Server which injects sidecar container(s) into a pod prior to persistence of the underlying object.
 
   * [Prerequisites](#prerequisites)
