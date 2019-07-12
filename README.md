@@ -275,32 +275,24 @@ For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (
 
 3. Create Secretless ConfigMap
 
-    This configuration sets up an `http` listener on `0.0.0.0:3000`, with a `basic_auth` handler that retrieves user and password using the `literal` secret provider. 
+    This configuration sets up an `http` service authenticator listening on `0.0.0.0:3000` using the `basic_auth` authentication strategy. The service authenticator is passed the actual values for the user and password using the `literal` secret provider. 
    
-   As shown below, the username and password are the literal values `test-secret#username` and `test-secret#password`, respectively.
+   As shown below, the username and password are the literal values `my-username` and `secretpassword`, respectively.
 
     ```bash
     ~$ cat << EOL | kubectl -n ${TEST_APP_NAMESPACE_NAME} create configmap secretless --from-file=secretless.yml=/dev/stdin
-    listeners:
-    - name: http_good_basic_auth
-      debug: true
-      protocol: http
-      address: 0.0.0.0:3000
-    
-    handlers:
-    - name: http_good_basic_auth_handler
-      type: basic_auth
-      listener: http_good_basic_auth
-      debug: true
-      match:
-        - ^http.*
-      credentials:
-        - name: username
-          provider: literal
-          id: test-secret#username
-        - name: password
-          provider: literal
-          id: test-secret#password
+    version: "2"
+    services:
+      my-service-proxy:
+        protocol: http
+        listenOn: tcp://0.0.0.0:3000
+        credentials:
+          username: my-username
+          password: secretpassword
+        config:
+          authenticationStrategy: basic_auth
+          authenticateURLsMatching:
+            - ^http.*
     EOL
     ```
 
@@ -351,7 +343,7 @@ For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (
 
     In this step, you test Secretless by `exec`ing into the application pod's main container and issuing an HTTP request against the echo server proxied by Secretless. 
     
-    The pod spec for the echo server sets the environment variable `http_proxy` within the application to the Secretless `http` listener's address `http://0.0.0.0:3000`. This allows Secretless to inject HTTP Authorization headers when proxying the request, as per the Secretless configuration above.
+    The pod spec for the echo server sets the environment variable `http_proxy` within the application to the Secretless `http` service authenticator's address `http://0.0.0.0:3000`. This allows Secretless to inject HTTP Authorization headers when proxying the request, as per the Secretless configuration above.
     
     The HTTP Authorization headers are extracted and base64 decoded from the response to retrieve the username and password.
 
@@ -368,7 +360,7 @@ For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (
    
     ```
     ```
-    test-secret#username:test-secret#password
+    my-username:secretpassword
     ```
     
 
@@ -556,32 +548,27 @@ For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (
 
 1. Create Secretless ConfigMap:
 
-   This configuration sets up an `http` listener on `0.0.0.0:3000`, with a `basic_auth` handler that retrieves user and password using the `conjur` secret provider. 
+   This configuration sets up an `http` service authenticator on `0.0.0.0:3000` using the `basic_auth` authentication strategy that retrieves user and password using the `conjur` secret provider. 
    
    The username and password are set and stored within the Conjur appliance.
    
     ```bash
     ~$ cat << EOL | kubectl -n ${TEST_APP_NAMESPACE_NAME} create configmap secretless --from-file=secretless.yml=/dev/stdin
-    listeners:
-    - name: http_good_basic_auth
-      debug: true
-      protocol: http
-      address: 0.0.0.0:3000
-    
-    handlers:
-    - name: http_good_basic_auth_handler
-      type: basic_auth
-      listener: http_good_basic_auth
-      debug: true
-      match:
-        - ^http.*
-      credentials:
-        - name: username
-          provider: conjur
-          id: test-secretless-app-db/username
-        - name: password
-          provider: conjur
-          id: test-secretless-app-db/password
+    services:
+      my-service-proxy:
+        protocol: http
+        listenOn: tcp://0.0.0.0:3000
+        credentials:
+          username:
+            from: conjur
+            get: test-secretless-app-db/username
+          password:
+            from: conjur
+            get: test-secretless-app-db/password
+        config:
+          authenticationStrategy: basic_auth
+          authenticateURLsMatching:
+            - ^http.*
     EOL
     ```
 
@@ -635,7 +622,7 @@ For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (
     
     In this step, you test Secretless by `exec`ing into the application pod's main container and issuing an HTTP request against the echo server proxied by Secretless. 
     
-    The pod spec for the echo server sets the environment variable `http_proxy` within the application to the Secretless `http` listener's address `http://0.0.0.0:3000`. This allows Secretless to inject HTTP Authorization headers when proxying the request, as per the Secretless configuration above.
+    The pod spec for the echo server sets the environment variable `http_proxy` within the application to the Secretless `http` service authenticator's address `http://0.0.0.0:3000`. This allows Secretless to inject HTTP Authorization headers when proxying the request, as per the Secretless configuration above.
     
     The HTTP Authorization headers are extracted and base64 decoded from the response to retrieve the username and password.
     
