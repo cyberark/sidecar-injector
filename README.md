@@ -134,6 +134,7 @@ Create a namespace `injectors`, where you will deploy the CyberArk Sidecar Injec
     ~$ kubectl -n injectors apply -f deployment/deployment.yaml
     ~$ kubectl -n injectors apply -f deployment/service.yaml
     ~$ kubectl -n injectors apply -f deployment/mutatingwebhook-ca-bundle.yaml
+    ~$ kubectl -n injectors apply -f deployment/crd.yaml
     ```
 
 #### Verify Sidecar Injector Installation
@@ -217,13 +218,22 @@ The following table lists the configurable parameters of the Sidecar Injector an
 | `sidecar-injector.cyberark.com/conjurConnConfig` | ConfigMap holding Conjur connection configuration               |  `nil` (required for authenticator |
 | `sidecar-injector.cyberark.com/injectType` | Injected Sidecar type (`secretless` or `authenticator`)                    |  `nil` (required) |
 | `sidecar-injector.cyberark.com/containerMode` | Sidecar Container mode (`init` or `sidecar`)                  |  `nil` (only applies to authenticator) |
-| `sidecar-injector.cyberark.com/containerName` | Sidecar Container name                  |  `nil` (only applies to secretless)                              |  
+| `sidecar-injector.cyberark.com/containerName` | Sidecar Container name                  |  `nil` (only applies to authenticator)                              |
 
 #### sidecar-injector.cyberark.com/secretlessConfig
 
-Expected to contain the following path:
+There are three options for the value of secretlessConfig:
+  1. configmapName
+	1. configfile#configmapname
+	1. k8s/crd#crdName
 
+Option one is legacy, providing backwards compatibility by only specifying a configmap name.
+The general format is provider#identifier.
+
+If a config map is referenced, it should contain the following path:
 + secretless.yml - Secretless Configuration File
+
+For help using a CRD to configure secretless, Refer to the [secretless CRD readme](https://github.com/cyberark/secretless-broker/tree/master/resource-definitions).
 
 #### sidecar-injector.cyberark.com/conjurConnConfig
 
@@ -250,12 +260,12 @@ For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (
     ```bash
     export TEST_APP_NAMESPACE_NAME=secretless-sidecar-test 
    ```
-1. Create test namespace
+2. Create test namespace
     ```bash
     ~$ kubectl create namespace ${TEST_APP_NAMESPACE_NAME}
     ```
 
-2. Label the default namespace with `cyberark-sidecar-injector=enabled`
+3. Label the default namespace with `cyberark-sidecar-injector=enabled`
     ```bash
     ~$ kubectl label \
       namespace ${TEST_APP_NAMESPACE_NAME} \
@@ -273,7 +283,7 @@ For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (
     secretless-sidecar-test         Active    18h       enabled
     ```
 
-3. Create Secretless ConfigMap
+4. Create Secretless ConfigMap
 
     This configuration sets up an `http` service authenticator listening on `0.0.0.0:3000` using the `basic_auth` authentication strategy. The service authenticator is passed the actual values for the user and password using the `literal` secret provider. 
    
@@ -296,7 +306,7 @@ For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (
     EOL
     ```
 
-4. Deploy an **echo server** app with the Secretless Sidecar:
+5. Deploy an **echo server** app with the Secretless Sidecar:
    
    The app is an **echo server** listening on port **8080**, which echoes the request header of any requests sent to it. 
    
@@ -330,7 +340,7 @@ For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (
     EOF
     ```
 
-5. Verify Secretless sidecar container injected
+6. Verify Secretless sidecar container injected
     ```bash
     ~$ kubectl -n ${TEST_APP_NAMESPACE_NAME} get pods
     ```
@@ -339,7 +349,7 @@ For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (
     test-app                 2/2       Running       0          1m
     ```
 
-6. Test Secretless
+7. Test Secretless
 
     In this step, you test Secretless by `exec`ing into the application pod's main container and issuing an HTTP request against the echo server proxied by Secretless. 
     

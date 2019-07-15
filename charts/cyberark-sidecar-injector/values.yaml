@@ -14,3 +14,6 @@ fullnameOverride: ""
 csrEnabled: true
 namespaceSelectorLabel: cyberark-sidecar-injector
 # certsSecret:
+
+SidecarInjectorImage: cyberark/sidecar-injector:latest
+SECRETLESS_CRD_SUFFIX: ""

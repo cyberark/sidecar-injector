@@ -1,0 +1,280 @@
+#!/bin/bash
+
+# This script is run within a docker container that has access
+# to GKE credentials and configured clients.
+
+# 1. Deploys the sidecar injector
+# 2. Deploys a test app (echo server), which is configured to have
+#    secretless broker (SB) injected. The injected SB is configured via a CRD
+#    (custom resource definition). SB is configured to proxy http requests to
+#    the echo server, adding in a basic auth header.
+# 3. A request is made to the echo server with SB as the proxy, the test passes
+#    if a basic auth header (inserted by SB) is detected in the response from
+#    the echo server.
+
+set -exu
+set -o pipefail
+
+. ./utils
+
+# setup environment variables
+log=log.txt
+: >${log}
+export SECRETLESS_CRD_SUFFIX=${SECRETLESS_CRD_SUFFIX-}
+HELM_DEPLOYMENT="sci-${UNIQUE_TEST_ID}"
+
+# Clean up when script completes
+function cleanup() {
+    announce 'Wrapping up and removing test environment'
+
+    # Delete image from GCR
+    gcloud container images delete --force-delete-tags -q  "${SIDECAR_IMAGE}"
+
+    # Delete sci helm deployment
+    helm delete --purge "${HELM_DEPLOYMENT}"
+
+    # Delete k8s resources namespace
+    kubectl delete --wait=true --ignore-not-found=true namespace "${TEST_NAMESPACE}"
+    kubectl delete --wait=true --ignore-not-found=true namespace "i-${TEST_NAMESPACE}"
+    kubectl delete --wait=true --ignore-not-found=true crd "configurations.secretless${SECRETLESS_CRD_SUFFIX}.io" &
+
+    kubectl delete --wait=true --ignore-not-found=true service secretless-broker secretless-broker-external &
+
+    kubectl delete --wait=true --ignore-not-found=true clusterrole secretless-crd &
+    kubectl delete --wait=true --ignore-not-found=true rolebinding secretless-crd &
+    kubectl delete --wait=true --ignore-not-found=true clusterrolebinding secretless-crd &
+    kubectl delete --wait=true --ignore-not-found=true serviceaccount secretless-crd &
+
+    kubectl delete --wait=true --ignore-not-found=true deployment sb-sci-echoserver &
+    kubectl delete --wait=true --ignore-not-found=true pods -l app=sb-sci-echoserver &
+    wait
+}
+
+exit_trap() {
+    cleanup
+    printf "\n--------------------- \n\n"
+    printf "\n- exited\n\n"
+    echo 1>&2 "${1:-}"
+    if [[ -e ${log} ]]; then
+        printf "\n-- last logs\n\n"
+        cat ${log}
+        rm -rf ${log}
+    fi
+}
+trap exit_trap HUP INT QUIT TERM EXIT ERR
+
+exit_err() {
+    echo "${@}"
+    exit 1
+}
+
+function echoserver_pod_name() {
+    kubectl get pods \
+        -n "${TEST_NAMESPACE}" \
+        --field-selector=status.phase=Running \
+        -l app=sb-sci-echoserver \
+        -o jsonpath="{.items[0].metadata.name}" \
+        2>${log}
+}
+
+function echoserver_pod_ready() {
+    (kubectl -n "${TEST_NAMESPACE}" describe pod "$(echoserver_pod_name)" 2>${log} \
+        || echo "Ready False") | awk '/Ready/{if ($2 != "True") exit 1}'
+}
+
+function get_first_pod_for_app() {
+    kubectl get \
+        --namespace "$2" \
+        po -l=app="$1" \
+        -o=jsonpath='{$.items[0].metadata.name}'
+}
+
+function curl_echoserver_via_sb() {
+    kubectl -n "${TEST_NAMESPACE}" \
+        exec -i "$(echoserver_pod_name)" -c echo-server -- \
+        env http_proxy=localhost:8000 curl \
+            -v \
+            --connect-timeout 4 \
+            localhost:8080 2>${log}
+}
+function curl_echoserver() {
+    kubectl -n "${TEST_NAMESPACE}" \
+        exec -i "$(echoserver_pod_name)" -c echo-server -- curl \
+        --connect-timeout 4 \
+        localhost:8080 &>${log}
+}
+
+function wait_for_echoserver_pod() {
+    echo "waiting for pod to be ready"
+    for _ in {1..60}; do
+        echoserver_pod_ready && break
+        printf "."
+        sleep 2
+    done
+    echoserver_pod_ready || exit_err "timeout waiting for echoserver_pod_ready"
+
+    for _ in {1..60}; do
+        curl_echoserver && break
+        printf "."
+        sleep 2
+    done
+    curl_echoserver || exit_err "timeout waiting for curl_echoserver"
+
+    echo ""
+    echo "ready"
+    echo ""
+}
+
+function check_sb_injected_auth_header_present_in_echoserver_response() {
+    local username=$1
+    local password=$2
+    local resp
+    resp=$(curl_echoserver_via_sb)
+    local expected_header
+    expected_header="authorization=Basic $(printf "%s" "${username}:${password}" | base64)"
+
+    if printf "%s" "${resp}" | grep -q "${expected_header}"; then
+        echo "test passed ✔"
+    else
+        echo "expected to find '${expected_header}', in response:" >${log}
+        echo "${resp}" >>${log}
+        exit_err "test failed ✗"
+    fi
+}
+
+function deploy_echoserver() {
+    echo "deploying echoserver test app"
+
+    echo ">>--- Labeling Namespace for Sidecar Injection"
+    kubectl label \
+        namespace "${TEST_NAMESPACE}" \
+        cyberark-sidecar-injector=enabled
+
+    ./echoserver.yaml.sh >echoserver.yaml 2>${log} || exit_err "Failed to template echoserver.yaml"
+    kubectl -n "${TEST_NAMESPACE}" \
+        apply -f echoserver.yaml 2>${log} || exit_err "Failed to deploy echoserver.yaml"
+
+
+    echo "echoserver test app deployed"
+    echo ""
+}
+
+function deploy_injector() {
+    # /src --> cyberark/sidecar-injector
+    pushd /src/
+
+    I_NAMESPACE="i-${TEST_NAMESPACE}"
+    cert="${HELM_DEPLOYMENT}-cyberark-sidecar-injector.${I_NAMESPACE}"
+
+    echo ">>--- Ensure sidecar-injector namespace is clean"
+    if helm list --all |grep -q "${HELM_DEPLOYMENT}"; then
+        helm delete --purge "${HELM_DEPLOYMENT}"
+    fi
+
+    kubectl delete namespace "${I_NAMESPACE}" --ignore-not-found=true
+
+    kubectl create namespace "${I_NAMESPACE}"
+
+    echo ">>--- Deploy sidecar injection helm chart"
+    helm \
+        --namespace "${I_NAMESPACE}" \
+        --name "${HELM_DEPLOYMENT}" \
+        --set "SidecarInjectorImage=${SIDECAR_IMAGE}" \
+        --set "SECRETLESS_CRD_SUFFIX=${SECRETLESS_CRD_SUFFIX}" \
+        --set "caBundle=$(
+            kubectl -n kube-system \
+                get configmap \
+                extension-apiserver-authentication \
+                -o=jsonpath='{.data.client-ca-file}'
+        )" \
+        install \
+        charts/cyberark-sidecar-injector
+    popd
+
+    echo ">>--- Wait for CSR to be created"
+    for _ in {1..30}; do
+        # the yaml output doesn't include the condition field so -o jsonpath doesn't work here
+        kubectl \
+            -n "${I_NAMESPACE}" \
+            get "csr/${cert}" \
+            |grep Pending \
+            && break
+        sleep 1
+    done
+
+    echo ">>--- Found CSR, aproving"
+    kubectl \
+        -n "${I_NAMESPACE}" \
+        certificate approve "${cert}"
+
+    echo ">>--- Waiting for Sidecar Injector pod to initialise"
+    pod=$(get_first_pod_for_app cyberark-sidecar-injector "${I_NAMESPACE}")
+    for _ in {1..60}; do
+        status=$(kubectl -n "${I_NAMESPACE}" get "pod/${pod}" \
+                -o jsonpath="{.status.phase}"||:)
+        [[ "${status}" == "Running" ]] && break
+        sleep 1
+    done
+    echo ">>--- Sidecar Injector pod running"
+    echo ">>--- Sidecar Injector deployment complete."
+}
+
+function main() {
+    echo "using SECRETLESS_CRD_SUFFIX=${SECRETLESS_CRD_SUFFIX}"
+    echo "UTID: ${UNIQUE_TEST_ID}"
+
+    # deploy injector
+    # This creates deploys a sidecar injector pod. This listens for deployment
+    # creations and modifies them in flight to add a secretless-broker container,
+    # if the appropriate annotations are found.
+    announce "Deploying Sidecar Injector"
+    deploy_injector
+
+    # deploy secretless deps and test app (echo server)
+    # This function deploys resources required by secretless broker (RBAC, CRD)
+    # but doesn't actually deploy secretless. It does create a deployment with
+    # annotations that should cause the injector deployed in the previous step
+    # to modify the deployment and insert a secretless broker container.
+    #
+    # If the sidecar injector succesfully adds the broker to the pod,
+    # the situation will look like this:
+    #
+    #              +-----------------------------------------+
+    #              |  Test Pod                               |
+    #              |                                         |
+    #              |   +-------------+      +------------+   |
+    #              |   | Echo Server |      | Secretless |   |
+    #              |   |             |      | Broker     |   |
+    #              |   |             +<-----+            |   |
+    #              |   |             |  2   |            |   |
+    #              |   |    exec     |      |            |   |
+    # +-------------------> curl +--------->+            |   |
+    #              |   |             |  1   |            |   |
+    #              |   |             |      |            |   |
+    #              |   +-------------+      +------------+   |
+    #              |                                         |
+    #              |                                         |
+    #              +-----------------------------------------+
+    #
+    # Test scenario:
+    # the echo server is an app that requires basic auth, kubectl exec curl is
+    # an that uses echo server but doesn't know the credentials. Curl makes a
+    # request to secretless broker (1) the broker inserts a basic auth header
+    # into the requet and proxies it to the echo server (2). Echo server
+    # responds back.
+    #
+    # Echo server doesn't actually require basic auth, but because the echo
+    # server echos it's requests, we can inspect the response from the echo
+    # server to check that secretless broker injected the basic auth header.
+
+    announce "Deploying Echoserver Test Application"
+    deploy_echoserver
+    wait_for_echoserver_pod
+
+    # At this point everything is deployed, we need to make a request, that
+    # will be proxied by secretless broker and check the basic auth header.
+    announce "Verifying Deployment"
+    check_sb_injected_auth_header_present_in_echoserver_response username password
+}
+
+main

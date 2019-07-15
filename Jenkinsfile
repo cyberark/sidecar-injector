@@ -14,6 +14,11 @@ pipeline {
         sh './bin/build latest'
       }
     }
+    stage('Test Sidecar Injector'){
+      steps {
+        sh 'summon -f ./tests/secrets.yml ./run-tests'
+      }
+    }
 
     stage('Publish Sidecar Injector Images') {
       when {

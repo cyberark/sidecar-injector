@@ -32,4 +32,4 @@ COPY --from=mutating-webhook-service-builder \
      /go/src/github.com/cyberark/secretless-broker/sidecar-injector/cyberark-sidecar-injector \
      /usr/local/bin/
 
-ENTRYPOINT ["/usr/local/bin/cyberark-sidecar-injector", "-v=5"]
+ENTRYPOINT ["/usr/local/bin/cyberark-sidecar-injector"]
