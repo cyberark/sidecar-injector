@@ -64,7 +64,13 @@ exit_trap() {
 trap exit_trap HUP INT QUIT TERM EXIT ERR
 
 exit_err() {
-    echo "${@}"
+    echo "Exiting with error: ${*}"
+    echo -e "\n\n*** Secretless container logs ***"
+    kubectl -n "${TEST_NAMESPACE}" logs "$(echoserver_pod_name)" -c secretless
+    echo -e "\n\n*** echo-server container logs ***"
+    kubectl -n "${TEST_NAMESPACE}" logs "$(echoserver_pod_name)" -c echo-server
+    echo -e "\n\n*** echoserver.yaml ***"
+    cat echoserver.yaml
     exit 1
 }
 
