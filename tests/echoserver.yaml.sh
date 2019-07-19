@@ -15,6 +15,12 @@ current_namespace() {
   fi
 }
 
+# list of api groups that contain configurations
+api_groups(){
+  kubectl api-resources \
+    |awk '/sbconfig/{print "  - "$3}'
+}
+
 cat << EOL
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
@@ -38,7 +44,8 @@ rules:
   - list
   - watch
 - apiGroups:
-  - "secretless${SECRETLESS_CRD_SUFFIX}.io"
+  - secretless${SECRETLESS_CRD_SUFFIX}.io
+$(api_groups)
   resources:
   - configurations
   verbs:
