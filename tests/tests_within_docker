@@ -28,10 +28,10 @@ function cleanup() {
     announce 'Wrapping up and removing test environment'
 
     # Delete image from GCR
-    gcloud container images delete --force-delete-tags -q  "${SIDECAR_IMAGE}"
+    gcloud container images delete --force-delete-tags -q  "${SIDECAR_IMAGE}" ||:
 
     # Delete sci helm deployment
-    helm delete --purge "${HELM_DEPLOYMENT}"
+    helm delete --purge "${HELM_DEPLOYMENT}" ||:
 
     # Delete k8s resources namespace
     kubectl delete --wait=true --ignore-not-found=true namespace "${TEST_NAMESPACE}"
