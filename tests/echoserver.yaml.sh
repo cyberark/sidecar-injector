@@ -25,7 +25,7 @@ cat << EOL
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: secretless-crd
+  name: secretless-crd-${SECRETLESS_CRD_SUFFIX}
 rules:
 - apiGroups:
   - apiextensions.k8s.io
@@ -57,20 +57,20 @@ $(api_groups)
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: secretless-crd
+  name: secretless-crd-${SECRETLESS_CRD_SUFFIX}
 
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: secretless-crd
+  name: secretless-crd-${SECRETLESS_CRD_SUFFIX}
 subjects:
 - kind: ServiceAccount
-  name: secretless-crd
+  name: secretless-crd-${SECRETLESS_CRD_SUFFIX}
   namespace: $(current_namespace)
 roleRef:
   kind: ClusterRole
-  name: secretless-crd
+  name: secretless-crd-${SECRETLESS_CRD_SUFFIX}
   apiGroup: rbac.authorization.k8s.io
 
 ---
@@ -118,7 +118,7 @@ spec:
         sidecar-injector.cyberark.com/injectType: "secretless"
 
     spec:
-      serviceAccountName: secretless-crd
+      serviceAccountName: secretless-crd-${SECRETLESS_CRD_SUFFIX}
       containers:
       - name: echo-server
         image: gcr.io/google_containers/echoserver:1.10

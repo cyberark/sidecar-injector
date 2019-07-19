@@ -40,10 +40,9 @@ function cleanup() {
 
     kubectl delete --wait=true --ignore-not-found=true service secretless-broker secretless-broker-external &
 
-    kubectl delete --wait=true --ignore-not-found=true clusterrole secretless-crd &
-    kubectl delete --wait=true --ignore-not-found=true rolebinding secretless-crd &
-    kubectl delete --wait=true --ignore-not-found=true clusterrolebinding secretless-crd &
-    kubectl delete --wait=true --ignore-not-found=true serviceaccount secretless-crd &
+    kubectl delete --wait=true --ignore-not-found=true clusterrole "secretless-crd-${SECRETLESS_CRD_SUFFIX}" &
+    kubectl delete --wait=true --ignore-not-found=true clusterrolebinding "secretless-crd-${SECRETLESS_CRD_SUFFIX}" &
+    kubectl delete --wait=true --ignore-not-found=true serviceaccount "secretless-crd-${SECRETLESS_CRD_SUFFIX}" &
 
     kubectl delete --wait=true --ignore-not-found=true deployment sb-sci-echoserver &
     kubectl delete --wait=true --ignore-not-found=true pods -l app=sb-sci-echoserver &
