@@ -32,6 +32,7 @@ This document shows how to deploy and use the CyberArk Sidecar Injector [Mutatin
   * [Conjur Authenticator/Secretless Sidecar Injection Example](#conjur-authenticatorsecretless-sidecar-injection-example)
     + [Deploy Authenticator Sidecar](#deploy-authenticator-sidecar)
     + [Deploy Secretless Sidecar](#deploy-secretless-sidecar)
+  * [License](#license)
 
 ## Prerequisites
 
@@ -650,3 +651,7 @@ For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (
     ```
     "test_app:84674b2874a5d7c952e7fec8"
     ```
+
+## License
+
+The Sidecar Injector is licensed under Apache License 2.0 - see [`LICENSE`](LICENSE) for more details.
