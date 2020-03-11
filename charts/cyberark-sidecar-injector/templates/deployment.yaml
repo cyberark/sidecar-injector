@@ -24,7 +24,7 @@ spec:
 {{- if .Values.csrEnabled }}
       initContainers:
         - name: init-webhook
-          image: google/cloud-sdk:alpine
+          image: {{ .Values.SidecarInjectorImage }}
           restartPolicy: Never
           command:
             - /bin/sh
@@ -32,11 +32,6 @@ spec:
           args:
             - |
               set -e
-
-              apk add openssl curl
-              curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
-              chmod +x ./kubectl
-              mv ./kubectl /usr/local/bin/kubectl
 
               secret={{ include "cyberark-sidecar-injector.fullname" . | quote }}
               service={{ include "cyberark-sidecar-injector.fullname" . | quote }}
