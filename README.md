@@ -652,6 +652,13 @@ For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (
     "test_app:84674b2874a5d7c952e7fec8"
     ```
 
+## Contributing
+
+We welcome contributions of all kinds to this repository. For instructions on how to get started and descriptions of our development workflows, please see our [contributing
+guide][contrib].
+
+[contrib]: https://github.com/cyberark/sidecar-injector/blob/master/CONTRIBUTING.md
+
 ## License
 
 The Sidecar Injector is licensed under Apache License 2.0 - see [`LICENSE`](LICENSE) for more details.
