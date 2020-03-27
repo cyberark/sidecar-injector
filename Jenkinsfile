@@ -7,7 +7,7 @@ pipeline {
     timestamps()
     buildDiscarder(logRotator(numToKeepStr: '30'))
   }
-  
+
   triggers {
     cron(getDailyCronString())
   }
@@ -21,6 +21,12 @@ pipeline {
     stage('Test Sidecar Injector'){
       steps {
         sh 'summon -f ./tests/secrets.yml ./run-tests'
+      }
+    }
+
+    stage('Scan Image') {
+      steps {
+        scanAndReport("sidecar-injector:latest", "HIGH")
       }
     }
 
