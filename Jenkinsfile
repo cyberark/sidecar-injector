@@ -25,8 +25,17 @@ pipeline {
     }
 
     stage('Scan Image') {
-      steps {
-        scanAndReport("sidecar-injector:latest", "HIGH")
+      parallel {
+        stage("Scan image for fixable issues") {
+          steps {
+            scanAndReport("sidecar-injector:latest", "HIGH", false)
+          }
+        }
+        stage("Scan image for all issues") {
+          steps {
+            scanAndReport("sidecar-injector:latest", "NONE", true)
+          }
+        }
       }
     }
 
