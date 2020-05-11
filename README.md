@@ -207,7 +207,11 @@ Make sure to read the NOTES section once the chart is installed; instructions ar
 
 ### Configuration
 
-The sidecar injector will not inject the sidecar into pods by default. Add the `sidecar-injector.cyberark.com/inject` annotation with value `true` to the pod template spec to enable injection.
+The configurable parameters should be set as annotations on the **Pod template spec** and
+**NOT on the Deployment, Job or otherwise**. The sidecar injector will not inject the
+sidecar into pods by default. Add the `sidecar-injector.cyberark.com/inject` annotation
+with value `true` to the **Pod template spec** to enable injection. Injection will not go
+ahead if the annotations are not on the **Pod template spec**.
 
 The following table lists the configurable parameters of the Sidecar Injector and their default values.
 
