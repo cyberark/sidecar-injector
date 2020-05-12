@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 
-	"github.com/golang/glog"
 	"k8s.io/api/admission/v1beta1"
 	admissionregistrationv1beta1 "k8s.io/api/admissionregistration/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -60,7 +60,7 @@ type WebhookServerParameters struct {
 }
 
 func failWithResponse(errMsg string) *v1beta1.AdmissionResponse {
-	glog.Infof(errMsg)
+	log.Printf(errMsg)
 	return &v1beta1.AdmissionResponse{
 		Result: &metav1.Status{
 			Message: errMsg,
@@ -68,20 +68,29 @@ func failWithResponse(errMsg string) *v1beta1.AdmissionResponse {
 	}
 }
 
+func podName(pod corev1.Pod) string {
+	name := pod.GenerateName
+	if name == "" {
+		name = pod.Name
+	}
+
+	return name
+}
+
 // main mutation process
-func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
+func mutate(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	req := ar.Request
 	var pod corev1.Pod
 	if err := json.Unmarshal(req.Object.Raw, &pod); err != nil {
 		return failWithResponse(fmt.Sprintf("Could not unmarshal raw object: %v", err))
 	}
 
-	glog.Infof("AdmissionReview for Kind=%v, Namespace=%v Name=%v (%v) UID=%v rfc6902PatchOperation=%v UserInfo=%v",
-		req.Kind, req.Namespace, req.Name, pod.Name, req.UID, req.Operation, req.UserInfo)
+	log.Printf("AdmissionReview for Kind=%v, Namespace=%v PodName=%v UID=%v rfc6902PatchOperation=%v UserInfo=%v",
+		req.Kind, req.Namespace, podName(pod), req.UID, req.Operation, req.UserInfo)
 
 	// determine whether to perform mutation
 	if !mutationRequired(ignoredNamespaces, &pod.ObjectMeta) {
-		glog.Infof("Skipping mutation for %s/%s due to policy check", req.Namespace, pod.Name)
+		log.Printf("Skipping mutation for %s/%s due to policy check", req.Namespace, pod.Name)
 		return &v1beta1.AdmissionResponse{
 			Allowed: true,
 		}
@@ -142,7 +151,7 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
         break;
 	default:
 		errMsg := fmt.Sprintf("Mutation failed for pod %s, in namespace %s, due to invalid inject type annotation value = %s", pod.Name, req.Namespace, injectType)
-		glog.Infof(errMsg)
+		log.Printf(errMsg)
 		return &v1beta1.AdmissionResponse{
 			Result: &metav1.Status{
 				Message: errMsg,
@@ -162,7 +171,7 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 		}
 	}
 
-	glog.Infof("AdmissionResponse: patch=%v\n", string(patchBytes))
+	log.Printf("AdmissionResponse: patch=%v\n", string(patchBytes))
 	return &v1beta1.AdmissionResponse{
 		Allowed: true,
 		Patch:   patchBytes,
@@ -183,7 +192,7 @@ func (whsvr *WebhookServer) Serve(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(body) == 0 {
-		glog.Error("empty body")
+		log.Print("empty body")
 		http.Error(w, "empty body", http.StatusBadRequest)
 		return
 	}
@@ -191,23 +200,44 @@ func (whsvr *WebhookServer) Serve(w http.ResponseWriter, r *http.Request) {
 	// verify the content type is accurate
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/json" {
-		glog.Errorf("Content-Type=%s, expecting application/json", contentType)
+		log.Printf("Content-Type=%s, expecting application/json", contentType)
 		http.Error(w, "invalid Content-Type, expecting `application/json`", http.StatusUnsupportedMediaType)
 		return
 	}
 
+	admissionReview := HandleAdmissionReview(body)
+	resp, err := json.Marshal(admissionReview)
+	if err != nil {
+		log.Printf("could not encode response: %v", err)
+		http.Error(w, fmt.Sprintf("could not encode response: %v", err), http.StatusInternalServerError)
+	}
+	log.Printf("Ready to write response ...")
+	if _, err := w.Write(resp); err != nil {
+		log.Printf("could not write response: %v", err)
+		http.Error(w, fmt.Sprintf("could not write response: %v", err), http.StatusInternalServerError)
+	}
+}
+
+func ParseAdmissionReview(body []byte) (*v1beta1.AdmissionReview, error) {
+	var ar v1beta1.AdmissionReview
+	 _, _, err := deserializer.Decode(body, nil, &ar)
+
+	return &ar, err
+}
+
+func HandleAdmissionReview(body []byte) v1beta1.AdmissionReview {
 	var admissionResponse *v1beta1.AdmissionResponse
-	ar := v1beta1.AdmissionReview{}
-	//Object, *schema.GroupVersionKind, error
-	if _, _, err := deserializer.Decode(body, nil, &ar); err != nil {
-		glog.Errorf("could not decode body: %v", err)
+	ar, err := ParseAdmissionReview(body)
+
+	if err != nil {
+		log.Printf("could not decode body: %v", err)
 		admissionResponse = &v1beta1.AdmissionResponse{
 			Result: &metav1.Status{
 				Message: err.Error(),
 			},
 		}
 	} else {
-		admissionResponse = whsvr.mutate(&ar)
+		admissionResponse = mutate(ar)
 	}
 
 	admissionReview := v1beta1.AdmissionReview{}
@@ -218,14 +248,5 @@ func (whsvr *WebhookServer) Serve(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	resp, err := json.Marshal(admissionReview)
-	if err != nil {
-		glog.Errorf("could not encode response: %v", err)
-		http.Error(w, fmt.Sprintf("could not encode response: %v", err), http.StatusInternalServerError)
-	}
-	glog.Infof("Ready to write response ...")
-	if _, err := w.Write(resp); err != nil {
-		glog.Errorf("could not write response: %v", err)
-		http.Error(w, fmt.Sprintf("could not write response: %v", err), http.StatusInternalServerError)
-	}
+	return admissionReview
 }

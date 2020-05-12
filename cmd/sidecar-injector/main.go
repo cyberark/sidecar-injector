@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -26,7 +27,7 @@ func main() {
 
 	pair, err := tls.LoadX509KeyPair(parameters.CertFile, parameters.KeyFile)
 	if err != nil {
-		glog.Errorf("Failed to load key pair: %v", err)
+		log.Printf("Failed to load key pair: %v", err)
 		os.Exit(1)
 	}
 
@@ -44,7 +45,7 @@ func main() {
 
 	// start webhook server in goroutine
 	go func() {
-		glog.Infof("Serving mutating admission webhook on %s", whsvr.Server.Addr)
+		log.Printf("Serving mutating admission webhook on %s", whsvr.Server.Addr)
 		if err := whsvr.Server.ListenAndServeTLS("", ""); err != nil {
 			glog.Errorf("Failed to listen and serve: %v", err)
 			os.Exit(1)
@@ -56,6 +57,6 @@ func main() {
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 	<-signalChan
 
-	glog.Infof("Received OS shutdown signal, shutting down webhook server gracefully...")
+	log.Printf("Received OS shutdown signal, shutting down webhook server gracefully...")
 	whsvr.Server.Shutdown(context.Background())
 }
