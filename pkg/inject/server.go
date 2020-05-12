@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 
 	"k8s.io/api/admission/v1beta1"
 	admissionregistrationv1beta1 "k8s.io/api/admissionregistration/v1beta1"
@@ -60,39 +61,34 @@ type WebhookServerParameters struct {
 	KeyFile  string // path to the x509 private key matching `CertFile`
 }
 
-func failWithResponse(errMsg string) *v1beta1.AdmissionResponse {
+func failWithResponse(errMsg string) v1beta1.AdmissionResponse {
 	log.Printf(errMsg)
-	return &v1beta1.AdmissionResponse{
+	return v1beta1.AdmissionResponse{
 		Result: &metav1.Status{
 			Message: errMsg,
 		},
 	}
 }
 
-func podName(pod corev1.Pod) string {
-	name := pod.GenerateName
-	if name == "" {
-		name = pod.Name
+// HandleAdmissionRequest applies the sidecar-injector logic to the AdmissionRequest
+// and returns the results as an AdmissionResponse.
+func HandleAdmissionRequest(req *v1beta1.AdmissionRequest) v1beta1.AdmissionResponse {
+	if req == nil {
+		return failWithResponse("Received empty request")
 	}
 
-	return name
-}
-
-// main mutation process
-func mutate(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
-	req := ar.Request
 	var pod corev1.Pod
 	if err := json.Unmarshal(req.Object.Raw, &pod); err != nil {
 		return failWithResponse(fmt.Sprintf("Could not unmarshal raw object: %v", err))
 	}
 
 	log.Printf("AdmissionReview for Kind=%v, Namespace=%v PodName=%v UID=%v rfc6902PatchOperation=%v UserInfo=%v",
-		req.Kind, req.Namespace, podName(pod), req.UID, req.Operation, req.UserInfo)
+		req.Kind, req.Namespace, metaName(&pod.ObjectMeta), req.UID, req.Operation, req.UserInfo)
 
 	// determine whether to perform mutation
 	if !mutationRequired(ignoredNamespaces, &pod.ObjectMeta) {
 		log.Printf("Skipping mutation for %s/%s due to policy check", req.Namespace, pod.Name)
-		return &v1beta1.AdmissionResponse{
+		return v1beta1.AdmissionResponse{
 			Allowed: true,
 		}
 	}
@@ -100,7 +96,14 @@ func mutate(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	injectType, err := getAnnotation(&pod.ObjectMeta, annotationInjectTypeKey)
 	containerMode, err := getAnnotation(&pod.ObjectMeta, annotationContainerModeKey)
 	containerName, err := getAnnotation(&pod.ObjectMeta, annotationContainerNameKey)
-
+	conjurTokenReceiversStr, err := getAnnotation(
+		&pod.ObjectMeta,
+		annotationConjurTokenReceiversKey,
+	)
+	conjurTokenReceivers := strings.Split(conjurTokenReceiversStr, ",")
+	for i := range conjurTokenReceivers {
+		conjurTokenReceivers[i] = strings.TrimSpace(conjurTokenReceivers[i])
+	}
 
 	var sidecarConfig *PatchConfig
 	switch injectType {
@@ -149,11 +152,24 @@ func mutate(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
             containerMode:           containerMode,
             containerName:           containerName,
         })
+
+        containerVolumeMounts := ContainerVolumeMounts{}
+        for _, receiveContainerName := range conjurTokenReceivers {
+			containerVolumeMounts[receiveContainerName] = []corev1.VolumeMount{
+				{
+					Name:             "conjur-access-token",
+					ReadOnly:         true,
+					MountPath:        "/run/conjur",
+				},
+			}
+		}
+        sidecarConfig.ContainerVolumeMounts = containerVolumeMounts
+
         break;
 	default:
 		errMsg := fmt.Sprintf("Mutation failed for pod %s, in namespace %s, due to invalid inject type annotation value = %s", pod.Name, req.Namespace, injectType)
 		log.Printf(errMsg)
-		return &v1beta1.AdmissionResponse{
+		return v1beta1.AdmissionResponse{
 			Result: &metav1.Status{
 				Message: errMsg,
 			},
@@ -165,7 +181,7 @@ func mutate(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	annotations := map[string]string{annotationStatusKey: "injected"}
 	patchBytes, err := createPatch(&pod, sidecarConfig, annotations)
 	if err != nil {
-		return &v1beta1.AdmissionResponse{
+		return v1beta1.AdmissionResponse{
 			Result: &metav1.Status{
 				Message: err.Error(),
 			},
@@ -173,7 +189,7 @@ func mutate(ar *v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	}
 
 	log.Printf("AdmissionResponse: patch=%v\n", string(patchBytes))
-	return &v1beta1.AdmissionResponse{
+	return v1beta1.AdmissionResponse{
 		Allowed: true,
 		Patch:   patchBytes,
 		PatchType: func() *v1beta1.PatchType {
@@ -206,8 +222,33 @@ func (whsvr *WebhookServer) Serve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	admissionReview := HandleAdmissionReview(body)
-	resp, err := json.Marshal(admissionReview)
+	// Declare AdmissionResponse. This is the value that will be used to craft the
+	// response on this handler.
+	var admissionResponse v1beta1.AdmissionResponse
+
+	// Decode AdmissionRequest from raw AdmissionReview bytes
+	admissionRequest, err := NewAdmissionRequest(body)
+	if err != nil {
+		log.Printf("could not decode body: %v", err)
+
+		// Set AdmissionResponse with error message
+		admissionResponse = v1beta1.AdmissionResponse{
+			Result: &metav1.Status{
+				Message: err.Error(),
+			},
+		}
+	} else {
+		// Set AdmissionResponse with results from HandleAdmissionRequest
+		admissionResponse = HandleAdmissionRequest(admissionRequest)
+	}
+
+	// Ensure the response has the same UID as the original request (if the request field was populated)
+	admissionResponse.UID = admissionRequest.UID
+
+	// Wrap AdmissonResponse in AdmissionReview, then marshal it to JSON
+	resp, err := json.Marshal(v1beta1.AdmissionReview{
+		Response: &admissionResponse,
+	})
 	if err != nil {
 		log.Printf("could not encode response: %v", err)
 		http.Error(w, fmt.Sprintf("could not encode response: %v", err), http.StatusInternalServerError)
@@ -219,35 +260,11 @@ func (whsvr *WebhookServer) Serve(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func ParseAdmissionReview(body []byte) (*v1beta1.AdmissionReview, error) {
+// NewAdmissionRequest parses raw bytes to create an AdmissionRequest. AdmissionRequest
+// actually comes wrapped inside the bytes of an AdmissionReview.
+func NewAdmissionRequest(reviewRequestBytes []byte) (*v1beta1.AdmissionRequest, error) {
 	var ar v1beta1.AdmissionReview
-	 _, _, err := deserializer.Decode(body, nil, &ar)
+	 _, _, err := deserializer.Decode(reviewRequestBytes, nil, &ar)
 
-	return &ar, err
-}
-
-func HandleAdmissionReview(body []byte) v1beta1.AdmissionReview {
-	var admissionResponse *v1beta1.AdmissionResponse
-	ar, err := ParseAdmissionReview(body)
-
-	if err != nil {
-		log.Printf("could not decode body: %v", err)
-		admissionResponse = &v1beta1.AdmissionResponse{
-			Result: &metav1.Status{
-				Message: err.Error(),
-			},
-		}
-	} else {
-		admissionResponse = mutate(ar)
-	}
-
-	admissionReview := v1beta1.AdmissionReview{}
-	if admissionResponse != nil {
-		admissionReview.Response = admissionResponse
-		if ar.Request != nil {
-			admissionReview.Response.UID = ar.Request.UID
-		}
-	}
-
-	return admissionReview
+	return ar.Request, err
 }

@@ -1,0 +1,52 @@
+{
+  "metadata": {
+    "generateName": "nginx-deployment-6c54bd5869-",
+    "labels": {
+      "app": "nginx",
+      "pod-template-hash": "2710681425"
+    },
+    "annotations": {
+      "sidecar-injector.cyberark.com/conjurAuthConfig": "conjur",
+      "sidecar-injector.cyberark.com/conjurConnConfig": "conjur",
+      "sidecar-injector.cyberark.com/containerMode": "sidecar",
+      "sidecar-injector.cyberark.com/conjurTokenReceivers": "nginx-2",
+      "sidecar-injector.cyberark.com/inject": "true",
+      "sidecar-injector.cyberark.com/injectType": "authenticator",
+      "sidecar-injector.cyberark.com/containerName": "authenticator"
+    }
+  },
+  "spec": {
+    "volumes": [
+      {
+        "name": "default-token-tq5lq",
+        "secret": {
+          "secretName": "default-token-tq5lq"
+        }
+      }
+    ],
+    "containers": [
+      {
+        "name": "nginx-1",
+        "image": "nginx:1.7.9",
+        "volumeMounts": [
+          {
+            "name": "default-token-tq5lq",
+            "readOnly": true,
+            "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
+          }
+        ]
+      },
+      {
+        "name": "nginx-2",
+        "image": "nginx:1.7.9",
+        "volumeMounts": [
+          {
+            "name": "default-token-tq5lq",
+            "readOnly": true,
+            "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
+          }
+        ]
+      }
+    ]
+  }
+}

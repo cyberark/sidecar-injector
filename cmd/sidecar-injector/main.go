@@ -20,7 +20,7 @@ func main() {
 	flag.IntVar(&parameters.Port, "port", 443, "Webhook server port.")
 	flag.StringVar(&parameters.CertFile, "tlsCertFile", "/etc/webhook/certs/cert.pem", "File containing the x509 Certificate for HTTPS.")
 	flag.StringVar(&parameters.KeyFile, "tlsKeyFile", "/etc/webhook/certs/key.pem", "File containing the x509 private key to --tlsCertFile.")
-	flag.BoolVar(&parameters.NoSSL, "noSSL", false, "Disable SSL and ignore any certs.")
+	flag.BoolVar(&parameters.NoTLS, "noTLS", false, "Disable SSL and ignore any certs.")
 	flag.Parse()
 
 	whsvr := &inject.WebhookServer{
@@ -40,7 +40,7 @@ func main() {
 		log.Printf("Serving mutating admission webhook on %s", whsvr.Server.Addr)
 
 		var startServer func() error
-		if parameters.NoSSL {
+		if parameters.NoTLS {
 			startServer = func() error {
 				return whsvr.Server.ListenAndServe()
 			}
