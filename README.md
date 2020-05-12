@@ -88,9 +88,9 @@ The docker image entrypoint is the server binary. The binary supports the follow
 ```bash
 -tlsCertFile=/etc/webhook/certs/cert.pem
 -tlsKeyFile=/etc/webhook/certs/key.pem            
--port=8080                       
+-noTLS=false
+-port=8080
 ```
-It also supports [glog](https://github.com/golang/glog) flags e.g. `-v` for verbosity of logs
 
 ## Installation
 

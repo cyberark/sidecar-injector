@@ -54,6 +54,7 @@ type WebhookServer struct {
 
 // Webhook Server parameters
 type WebhookServerParameters struct {
+	NoTLS    bool   // disables TLS
 	Port     int    // webhook Server port
 	CertFile string // path to the x509 certificate for https
 	KeyFile  string // path to the x509 private key matching `CertFile`
