@@ -3,19 +3,28 @@ package inject
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 
-	"github.com/golang/glog"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+func metaName(meta *metav1.ObjectMeta) string {
+	name := meta.GenerateName
+	if name == "" {
+		name = meta.Name
+	}
+
+	return name
+}
+
 // mutationRequired determines if target resource requires mutation
 func mutationRequired(ignoredList []string, metadata *metav1.ObjectMeta) bool {
-	// skip special kubernete system namespaces
+	// skip special Kubernetes system namespaces
 	for _, namespace := range ignoredList {
 		if metadata.Namespace == namespace {
-			glog.Infof("Skip mutation for %v for it' in special namespace:%v", metadata.Name, metadata.Namespace)
+			log.Printf("Skip mutation for %v for it' in special namespace:%v", metadata.Name, metadata.Namespace)
 			return false
 		}
 	}
@@ -33,7 +42,7 @@ func mutationRequired(ignoredList []string, metadata *metav1.ObjectMeta) bool {
 		}
 	}
 
-	glog.Infof("Mutation policy for %v/%v: status: %q required:%v", metadata.Namespace, metadata.Name, status, required)
+	log.Printf("Mutation policy for %v/%v: status: %q required:%v", metadata.Namespace, metadata.Name, status, required)
 	return required
 }
 
@@ -64,8 +73,8 @@ func envVarFromFieldPath(envVarName, fieldPath string) corev1.EnvVar {
 }
 
 func envVarFromLiteral(envVarName, value string) corev1.EnvVar {
-	return corev1.EnvVar {
-		Name: envVarName,
+	return corev1.EnvVar{
+		Name:  envVarName,
 		Value: value,
 	}
 }

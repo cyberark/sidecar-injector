@@ -74,6 +74,9 @@ Injects:
   + a newly created shareable **in-memory Volume** named `conjur-access-token` used to store the access token 
   + a configurable **Authenticator container** with:
     + a **Volume Mount** at `/run/conjur` of the `conjur-access-token` Volume
+  + a read-only **Volume Mount** at `/run/conjur` of the `conjur-access-token` Volume for
+    each of the containers whose names appears in the comma-separated list of container
+    names that you may configure.
 
 ### Mandatory TLS
 
@@ -88,9 +91,9 @@ The docker image entrypoint is the server binary. The binary supports the follow
 ```bash
 -tlsCertFile=/etc/webhook/certs/cert.pem
 -tlsKeyFile=/etc/webhook/certs/key.pem            
--port=8080                       
+-noTLS=false
+-port=8080
 ```
-It also supports [glog](https://github.com/golang/glog) flags e.g. `-v` for verbosity of logs
 
 ## Installation
 
@@ -222,6 +225,7 @@ The following table lists the configurable parameters of the Sidecar Injector an
 | `sidecar-injector.cyberark.com/conjurAuthConfig` | ConfigMap holding Conjur authentication configuration            |  `nil` (required for authenticator |
 | `sidecar-injector.cyberark.com/conjurConnConfig` | ConfigMap holding Conjur connection configuration               |  `nil` (required for authenticator |
 | `sidecar-injector.cyberark.com/injectType` | Injected Sidecar type (`secretless` or `authenticator`)                    |  `nil` (required) |
+| `sidecar-injector.cyberark.com/conjurTokenReceivers` | Comma-separated list of the names of containers, in the pod, that will be injected with `conjur-access-token` VolumeMounts. (e.g. `app-container-1,app-container-2`)                  |  `nil` (only applies to authenticator) |
 | `sidecar-injector.cyberark.com/containerMode` | Sidecar Container mode (`init` or `sidecar`)                  |  `nil` (only applies to authenticator) |
 | `sidecar-injector.cyberark.com/containerName` | Sidecar Container name                  |  `nil` (only applies to authenticator)                              |
 
@@ -509,6 +513,7 @@ For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (
         sidecar-injector.cyberark.com/conjurAuthConfig: conjur
         sidecar-injector.cyberark.com/conjurConnConfig: conjur
         sidecar-injector.cyberark.com/containerMode: ${containerMode}
+        sidecar-injector.cyberark.com/conjurTokenReceivers: "app"
         sidecar-injector.cyberark.com/inject: "yes"
         sidecar-injector.cyberark.com/injectType: authenticator
         sidecar-injector.cyberark.com/containerName: secretless
@@ -519,9 +524,6 @@ For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (
       containers:
       - image: googlecontainer/echoserver:1.1
         name: app
-        volumeMounts:
-        - mountPath: /run/conjur
-          name: conjur-access-token
       serviceAccountName: ${TEST_APP_SERVICE_ACCOUNT}
     EOF
     ```
@@ -539,7 +541,7 @@ For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (
 
     In this step, you test the Authenticator by `exec`ing into the application pod's main container and read the contents of `/run/conjur/access-token`. 
     
-    The `/run/conjur/access-token` file contains the access token which is injected by the **Authenticator** sidecar upon successful authentication against the Conjur appliance.
+    The `/run/conjur/access-token` file contains the access token which is injected by the **Authenticator** sidecar upon successful authentication against the Conjur appliance. Note that this file is volume mounted into the application pod's main container as a result of the annotation `sidecar-injector.cyberark.com/conjurTokenReceivers` being set to that container's name.
 
     ```bash
     ~$ kubectl -n ${TEST_APP_NAMESPACE_NAME} \

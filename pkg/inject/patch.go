@@ -2,6 +2,8 @@ package inject
 
 import (
 	"encoding/json"
+	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -26,6 +28,14 @@ func createPatch(pod *corev1.Pod, sidecarConfig *PatchConfig, annotations map[st
 	patch = append(patch, addContainer(pod.Spec.Containers, sidecarConfig.Containers, "/spec/containers")...)
 	patch = append(patch, addVolume(pod.Spec.Volumes, sidecarConfig.Volumes, "/spec/volumes")...)
 	patch = append(patch, updateAnnotation(pod.Annotations, annotations)...)
+	patch = append(
+		patch,
+		addVolumeMounts(
+			pod.Spec.Containers,
+			sidecarConfig.ContainerVolumeMounts,
+			"/spec/containers",
+		)...,
+	)
 
 	return json.Marshal(patch)
 }
@@ -48,6 +58,36 @@ func addContainer(target, added []corev1.Container, basePath string) (patch []rf
 			Path:  path,
 			Value: value,
 		})
+	}
+	return patch
+}
+
+// addVolumeMounts creates a patch for adding volume mounts
+func addVolumeMounts(target []corev1.Container, added ContainerVolumeMounts, basePath string) (patch []rfc6902PatchOperation) {
+	for index, container := range target {
+		volumeMounts, ok := added[container.Name]
+		if !ok || len(volumeMounts) == 0 { continue }
+
+		if len(container.VolumeMounts) == 0 {
+			volumeMount := volumeMounts[0]
+			volumeMounts = volumeMounts[1:]
+
+			path := fmt.Sprintf("%s/%d/volumeMounts", basePath, index)
+			patch = append(patch, rfc6902PatchOperation{
+				Op:    patchOperationAdd,
+				Path:  path,
+				Value: []corev1.VolumeMount{volumeMount},
+			})
+		}
+
+		path := fmt.Sprintf("%s/%d/volumeMounts/-", basePath, index)
+		for _, volumeMount := range volumeMounts {
+			patch = append(patch, rfc6902PatchOperation{
+				Op:    patchOperationAdd,
+				Path:  path,
+				Value: volumeMount,
+			})
+		}
 	}
 	return patch
 }
