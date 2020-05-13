@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: cyberark-sidecar-injector
@@ -6,6 +6,9 @@ metadata:
     app: cyberark-sidecar-injector
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: cyberark-sidecar-injector
   template:
     metadata:
       labels:
