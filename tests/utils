@@ -21,7 +21,6 @@ function runDockerCommand() {
       -e GCLOUD_ZONE \
       -e GCLOUD_PROJECT_NAME \
       -e SIDECAR_IMAGE \
-      -e SECRETLESS_IMAGE \
       -e SECRETLESS_CRD_SUFFIX \
       -e UNIQUE_TEST_ID \
       -e TEST_NAMESPACE \

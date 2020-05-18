@@ -1,4 +1,4 @@
-module github.com/cyberark/secretless-broker/sidecar-injector
+module github.com/cyberark/sidecar-injector
 
 require (
 	github.com/PuerkitoBio/purell v1.1.0 // indirect

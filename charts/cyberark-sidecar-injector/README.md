@@ -96,6 +96,9 @@ The following table lists the configurable parameters of the CyberArk Sidecar In
 | `caBundle`        | CA certificate bundle that signs the server cert used by the webhook  | `nil` (required)                                           |
 | `csrEnabled`       | Generate a private key and certificate signing request towards the Kubernetes Cluster                   | `true`                        |
 | `certsSecret`       | Private key and signed certificate used by the webhook server             | `nil` (required if csrEnabled is false)                |
+| `sidecarInjectorImage`       | Container image for the sidecar injector.             | `cyberark/sidecar-injector:latest`               |
+| `secretlessImage`       | Container image for the Secretless sidecar.             | `cyberark/secretless-broker:latest`               |
+| `authenticatorImage`       | Container image for the Kubernetes Authenticator sidecar.             | `cyberark/conjur-kubernetes-authenticator:latest`               |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 
@@ -140,3 +143,15 @@ kubectl -n kube-system \
   extension-apiserver-authentication \
   -o=jsonpath='{.data.client-ca-file}'
 ```
+
+### sidecarInjectorImage
+
+`sidecarInjectorImage` is the container image for the sidecar injector.
+
+### secretlessImage
+
+`secretlessImage` is the container image for the Secretless sidecar.
+
+### authenticatorImage
+
+`authenticatorImage` is the container image for the Kubernetes Authenticator sidecar.

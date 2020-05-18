@@ -24,7 +24,7 @@ spec:
 {{- if .Values.csrEnabled }}
       initContainers:
         - name: init-webhook
-          image: {{ .Values.SidecarInjectorImage }}
+          image: {{ .Values.sidecarInjectorImage }}
           restartPolicy: Never
           command:
             - /bin/sh
@@ -120,15 +120,14 @@ spec:
 {{- end }}
       containers:
         - name: cyberark-sidecar-injector
-          image: {{ .Values.SidecarInjectorImage }}
+          image: {{ .Values.sidecarInjectorImage }}
           imagePullPolicy: Always
           args:
             - -tlsCertFile=/etc/webhook/certs/cert.pem
             - -tlsKeyFile=/etc/webhook/certs/key.pem
             - -port=8080
-            - -alsologtostderr
-            - -v=4
-            - 2>&1
+            - -secretless-image={{ .Values.secretlessImage }}
+            - -authenticator-image={{ .Values.authenticatorImage }}
           env:
             - name: SECRETLESS_CRD_SUFFIX
               value: "{{ .Values.SECRETLESS_CRD_SUFFIX }}"

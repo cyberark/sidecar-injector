@@ -184,8 +184,8 @@ function deploy_injector() {
     helm \
         --namespace "${I_NAMESPACE}" \
         --name "${HELM_DEPLOYMENT}" \
-        --set "SidecarInjectorImage=${SIDECAR_IMAGE}" \
         --set "SECRETLESS_CRD_SUFFIX=${SECRETLESS_CRD_SUFFIX}" \
+        --set "sidecarInjectorImage=${SIDECAR_IMAGE}" \
         --set "caBundle=$(
             kubectl -n kube-system \
                 get configmap \

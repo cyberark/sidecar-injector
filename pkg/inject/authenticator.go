@@ -9,6 +9,7 @@ type AuthenticatorSidecarConfig struct {
 	conjurAuthConfigMapName string
 	containerMode           string
 	containerName           string
+	sidecarImage            string
 }
 
 func (authConfig AuthenticatorSidecarConfig) ContainerNameOrDefault() string {
@@ -21,14 +22,16 @@ func (authConfig AuthenticatorSidecarConfig) ContainerNameOrDefault() string {
 }
 
 // generateAuthenticatorSidecarConfig generates PatchConfig from a given AuthenticatorSidecarConfig
-func generateAuthenticatorSidecarConfig(authConfig AuthenticatorSidecarConfig) *PatchConfig {
+func generateAuthenticatorSidecarConfig(
+	authConfig AuthenticatorSidecarConfig,
+) *PatchConfig {
 	var containers, initContainers []corev1.Container
 
 	candidates := []corev1.Container{
 		{
 			Name:            authConfig.ContainerNameOrDefault(),
-			Image:           "cyberark/conjur-kubernetes-authenticator:latest",
-			ImagePullPolicy: "IfNotPresent",
+			Image:           authConfig.sidecarImage,
+			ImagePullPolicy: "Always",
 			Env: []corev1.EnvVar{
 				envVarFromFieldPath("MY_POD_NAME", "metadata.name"),
 				envVarFromFieldPath("MY_POD_NAMESPACE", "metadata.namespace"),

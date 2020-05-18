@@ -15,5 +15,8 @@ csrEnabled: true
 namespaceSelectorLabel: cyberark-sidecar-injector
 # certsSecret:
 
-SidecarInjectorImage: cyberark/sidecar-injector:latest
+secretlessImage: cyberark/secretless-broker:latest
+authenticatorImage: cyberark/conjur-kubernetes-authenticator:latest
+
+sidecarInjectorImage: cyberark/sidecar-injector:latest
 SECRETLESS_CRD_SUFFIX: ""

@@ -51,6 +51,7 @@ var ignoredNamespaces = []string{
 
 type WebhookServer struct {
 	Server *http.Server
+	Params WebhookServerParameters
 }
 
 // Webhook Server parameters
@@ -59,6 +60,8 @@ type WebhookServerParameters struct {
 	Port     int    // webhook Server port
 	CertFile string // path to the x509 certificate for https
 	KeyFile  string // path to the x509 private key matching `CertFile`
+	SecretlessContainerImage  string // Container image for the Secretless sidecar
+	AuthenticatorContainerImage  string // Container image for the Kubernetes Authenticator sidecar
 }
 
 func failWithResponse(errMsg string) v1beta1.AdmissionResponse {
@@ -70,9 +73,18 @@ func failWithResponse(errMsg string) v1beta1.AdmissionResponse {
 	}
 }
 
+// SidecarInjectorConfig are configuration values for the sidecar injector logic
+type SidecarInjectorConfig struct {
+	SecretlessContainerImage  string // Container image for the Secretless sidecar
+	AuthenticatorContainerImage  string // Container image for the Kubernetes Authenticator sidecar
+}
+
 // HandleAdmissionRequest applies the sidecar-injector logic to the AdmissionRequest
 // and returns the results as an AdmissionResponse.
-func HandleAdmissionRequest(req *v1beta1.AdmissionRequest) v1beta1.AdmissionResponse {
+func HandleAdmissionRequest(
+	sidecarInjectorConfig SidecarInjectorConfig,
+	req *v1beta1.AdmissionRequest,
+) v1beta1.AdmissionResponse {
 	if req == nil {
 		return failWithResponse("Received empty request")
 	}
@@ -123,10 +135,14 @@ func HandleAdmissionRequest(req *v1beta1.AdmissionRequest) v1beta1.AdmissionResp
 		}
 
 		sidecarConfig = generateSecretlessSidecarConfig(
-			secretlessConfig,
-			conjurConnConfigMapName,
-			conjurAuthConfigMapName,
-			ServiceAccountTokenVolumeName)
+			SecretlessSidecarConfig{
+				secretlessConfig:              secretlessConfig,
+				conjurConnConfigMapName:       conjurConnConfigMapName,
+				conjurAuthConfigMapName:       conjurAuthConfigMapName,
+				serviceAccountTokenVolumeName: ServiceAccountTokenVolumeName,
+				sidecarImage: sidecarInjectorConfig.SecretlessContainerImage,
+			},
+		)
 		break
 	case "authenticator":
         conjurAuthConfigMapName, err := getAnnotation(&pod.ObjectMeta, annotationConjurAuthConfigKey)
@@ -151,6 +167,7 @@ func HandleAdmissionRequest(req *v1beta1.AdmissionRequest) v1beta1.AdmissionResp
             conjurAuthConfigMapName: conjurAuthConfigMapName,
             containerMode:           containerMode,
             containerName:           containerName,
+            sidecarImage: 		     sidecarInjectorConfig.AuthenticatorContainerImage,
         })
 
         containerVolumeMounts := ContainerVolumeMounts{}
@@ -239,7 +256,13 @@ func (whsvr *WebhookServer) Serve(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		// Set AdmissionResponse with results from HandleAdmissionRequest
-		admissionResponse = HandleAdmissionRequest(admissionRequest)
+		admissionResponse = HandleAdmissionRequest(
+			SidecarInjectorConfig{
+				SecretlessContainerImage:    whsvr.Params.SecretlessContainerImage,
+				AuthenticatorContainerImage: whsvr.Params.AuthenticatorContainerImage,
+			},
+			admissionRequest,
+		)
 	}
 
 	// Ensure the response has the same UID as the original request (if the request field was populated)

@@ -14,9 +14,7 @@ export UNIQUE_TEST_ID
 export SECRETLESS_CRD_SUFFIX="${UNIQUE_TEST_ID}"
 export SECRETLESS_CRD_SUFFIX
 export SIDECAR_IMAGE="${DOCKER_REGISTRY_PATH}/sidecar-injector:${UNIQUE_TEST_ID}"
-export SECRETLESS_IMAGE="cyberark/secretless-broker"
 export TEST_NAMESPACE="sci-${UNIQUE_TEST_ID}"
-
 
 
 function testInjection() {

@@ -7,20 +7,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAuthenticatorSidecarInjection(t *testing.T) {
+func TestSecretlessSidecarInjection(t *testing.T) {
 	// Create the Admission Request (wrapped in an Admission Review) from the annotated
 	// pod fixture. The goal is to use the annotations as a signal to the sidecar-injector
 	// to mutate the Pod template spec.
 	req, err := newTestAdmissionRequest(
-		"./fixtures/authenticator-annotated-pod.json",
+		"./fixtures/secretless-annotated-pod.json",
 	)
 	if !assert.NoError(t, err) {
 		return
 	}
 	// Read the expected Pod template spec fixture
-	expectedMod, err := ioutil.ReadFile(
-		"./fixtures/authenticator-mutated-pod.json",
-	)
+	expectedMod, err := ioutil.ReadFile("./fixtures/secretless-mutated-pod.json")
 	if !assert.NoError(t, err) {
 		return
 	}
