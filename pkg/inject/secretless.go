@@ -3,6 +3,7 @@ package inject
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -13,15 +14,22 @@ type SecretlessSidecarConfig struct {
 	conjurConnConfigMapName       string
 	conjurAuthConfigMapName       string
 	serviceAccountTokenVolumeName string
-	sidecarImage string
+	sidecarImage                  string
 }
 
-// generateSecretlessSidecarConfig generates PatchConfig from a given secretlessConfigMapName
+// generateSecretlessSidecarConfig generates PatchConfig from a given
+// secretlessConfigMapName
 func generateSecretlessSidecarConfig(cfg SecretlessSidecarConfig) *PatchConfig {
 	envvars := []corev1.EnvVar{
-		envVarFromFieldPath("MY_POD_NAME", "metadata.name"),
-		envVarFromFieldPath("MY_POD_NAMESPACE", "metadata.namespace"),
-		envVarFromFieldPath("MY_POD_IP", "status.podIP"),
+		envVarFromFieldPath(
+			"MY_POD_IP", "status.podIP",
+		),
+		envVarFromFieldPath(
+			"MY_POD_NAME", "metadata.name",
+		),
+		envVarFromFieldPath(
+			"MY_POD_NAMESPACE", "metadata.namespace",
+		),
 	}
 
 	if crdSuffix, ok := os.LookupEnv("SECRETLESS_CRD_SUFFIX"); ok && crdSuffix != "" {
@@ -36,13 +44,37 @@ func generateSecretlessSidecarConfig(cfg SecretlessSidecarConfig) *PatchConfig {
 
 	if cfg.conjurConnConfigMapName != "" || cfg.conjurAuthConfigMapName != "" {
 		envvars = append(envvars,
-			envVarFromConfigMap("CONJUR_VERSION", cfg.conjurConnConfigMapName),
-			envVarFromConfigMap("CONJUR_APPLIANCE_URL", cfg.conjurConnConfigMapName),
-			envVarFromConfigMap("CONJUR_AUTHN_URL", cfg.conjurConnConfigMapName),
-			envVarFromConfigMap("CONJUR_ACCOUNT", cfg.conjurConnConfigMapName),
-			envVarFromConfigMap("CONJUR_SSL_CERTIFICATE", cfg.conjurConnConfigMapName),
-			envVarFromConfigMap("CONJUR_AUTHN_LOGIN", cfg.conjurAuthConfigMapName))
+			envVarFromConfigMap(
+				"CONJUR_ACCOUNT",
+				cfg.conjurConnConfigMapName,
+			),
+			envVarFromConfigMap(
+				"CONJUR_APPLIANCE_URL",
+				cfg.conjurConnConfigMapName,
+			),
+			envVarFromConfigMap(
+				"CONJUR_AUTHN_LOGIN",
+				cfg.conjurAuthConfigMapName,
+			),
+			envVarFromConfigMap(
+				"CONJUR_AUTHN_URL",
+				cfg.conjurConnConfigMapName,
+			),
+			envVarFromConfigMap(
+				"CONJUR_SSL_CERTIFICATE",
+				cfg.conjurConnConfigMapName,
+			),
+			envVarFromConfigMap(
+				"CONJUR_VERSION",
+				cfg.conjurConnConfigMapName,
+			),
+		)
 	}
+
+	// Sort envvars lexicographically
+	sort.Slice(envvars, func(i, j int) bool {
+		return envvars[i].Name < envvars[j].Name
+	})
 
 	// Allow configmgr#configspec in the SecretlessConfig annotation
 	var configMgr string
@@ -113,7 +145,7 @@ func generateSecretlessSidecarConfig(cfg SecretlessSidecarConfig) *PatchConfig {
 		},
 		)
 
-		// add configmap mount
+		// Add configmap mount
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
 			Name:      "secretless-config",
 			ReadOnly:  true,
@@ -126,7 +158,10 @@ func generateSecretlessSidecarConfig(cfg SecretlessSidecarConfig) *PatchConfig {
 		{
 			Name:            "secretless",
 			Image:           cfg.sidecarImage,
-			Args:            []string{"-config-mgr", fmt.Sprintf("%s#%s", configMgr, configSpec)},
+			Args:            []string{
+				"-config-mgr",
+				fmt.Sprintf("%s#%s", configMgr, configSpec),
+			},
 			ImagePullPolicy: "Always",
 			VolumeMounts:    volumeMounts,
 			Env:             envvars,

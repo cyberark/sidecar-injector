@@ -2,13 +2,6 @@
 
 set -e
 
-usage_if_empty() {
-  if [[ -z "${1}" ]]
-  then
-      usage
-  fi
-}
-
 usage() {
     cat <<EOF
 Generate Kubernetes deployment manifest for sidecar-injector webhook service.
@@ -22,6 +15,13 @@ The following flags are available to configure the sidecar-injector deployment. 
        --authenticator-image       Container image for the Kubernetes Authenticator sidecar.
 EOF
     exit 1
+}
+
+usage_if_empty() {
+  if [[ -z "${1}" ]]
+  then
+      usage
+  fi
 }
 
 sidecarInjectorImage="cyberark/sidecar-injector:latest"

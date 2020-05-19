@@ -90,15 +90,15 @@ The command removes all the Kubernetes components associated with the chart and 
 
 The following table lists the configurable parameters of the CyberArk Sidecar Injector chart and their default values.
 
-| Parameter                     | Description                                     | Default                                                    |
-| -----------------------       | ---------------------------------------------   | ---------------------------------------------------------- |
-| `namespaceSelectorLabel`        | Label which should be set to "enabled" for namespace to use Sidecar Injector | `cyberark-sidecar-injector` (required)                                           |
-| `caBundle`        | CA certificate bundle that signs the server cert used by the webhook  | `nil` (required)                                           |
-| `csrEnabled`       | Generate a private key and certificate signing request towards the Kubernetes Cluster                   | `true`                        |
-| `certsSecret`       | Private key and signed certificate used by the webhook server             | `nil` (required if csrEnabled is false)                |
-| `sidecarInjectorImage`       | Container image for the sidecar injector.             | `cyberark/sidecar-injector:latest`               |
-| `secretlessImage`       | Container image for the Secretless sidecar.             | `cyberark/secretless-broker:latest`               |
-| `authenticatorImage`       | Container image for the Kubernetes Authenticator sidecar.             | `cyberark/conjur-kubernetes-authenticator:latest`               |
+| Parameter | Description | Default|
+| --- | --- | --- |
+| `namespaceSelectorLabel` | Label which should be set to "enabled" for namespace to use Sidecar Injector | `cyberark-sidecar-injector` (required) |
+| `caBundle`| CA certificate bundle that signs the server cert used by the webhook | `nil` (required) |
+| `csrEnabled` | Generate a private key and certificate signing request towards the Kubernetes Cluster | `true` |
+| `certsSecret` | Private key and signed certificate used by the webhook server | `nil` (required if csrEnabled is false) |
+| `sidecarInjectorImage` | Container image for the sidecar injector. | `cyberark/sidecar-injector:latest` |
+| `secretlessImage` | Container image for the Secretless sidecar. | `cyberark/secretless-broker:latest` |
+| `authenticatorImage` | Container image for the Kubernetes Authenticator sidecar. | `cyberark/conjur-kubernetes-authenticator:latest` |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 

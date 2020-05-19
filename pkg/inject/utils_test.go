@@ -39,7 +39,9 @@ func applyPatchToAdmissionRequest(reviewRequestBytes []byte) ([]byte, error) {
 // Admission Requests.
 func newTestAdmissionRequest(podTemplateSpecPath string) ([]byte, error) {
 	t := template.Must(
-		template.ParseFiles("./fixtures/authenticator-admission-request.tmpl.json"),
+		template.ParseFiles(
+			"./testdata/authenticator-admission-request.tmpl.json",
+		),
 	)
 
 	pod, err := ioutil.ReadFile(podTemplateSpecPath)

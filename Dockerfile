@@ -1,8 +1,8 @@
 FROM golang:1.11-stretch as mutating-webhook-service-builder
 ENV GO111MODULE=on
 
-RUN mkdir -p /go/src/github.com/cyberark/sidecar-injector
-WORKDIR /go/src/github.com/cyberark/sidecar-injector
+RUN mkdir -p /work
+WORKDIR /work
 
 ADD go.* ./
 ADD pkg ./pkg
@@ -33,7 +33,7 @@ RUN apk add -u shadow libc6-compat curl openssl && \
 USER sidecar-injector
 
 COPY --from=mutating-webhook-service-builder \
-     /go/src/github.com/cyberark/sidecar-injector/cyberark-sidecar-injector \
+     /work/cyberark-sidecar-injector \
      /usr/local/bin/
 
 ENTRYPOINT ["/usr/local/bin/cyberark-sidecar-injector"]

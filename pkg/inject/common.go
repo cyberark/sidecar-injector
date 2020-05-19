@@ -24,7 +24,11 @@ func mutationRequired(ignoredList []string, metadata *metav1.ObjectMeta) bool {
 	// skip special Kubernetes system namespaces
 	for _, namespace := range ignoredList {
 		if metadata.Namespace == namespace {
-			log.Printf("Skip mutation for %v for it' in special namespace:%v", metadata.Name, metadata.Namespace)
+			log.Printf(
+				"Skip mutation for %v for it' in special namespace:%v",
+				metadata.Name,
+				metadata.Namespace,
+			)
 			return false
 		}
 	}
@@ -34,7 +38,8 @@ func mutationRequired(ignoredList []string, metadata *metav1.ObjectMeta) bool {
 	// determine whether to perform mutation based on annotation for the target resource
 	required := strings.ToLower(status) != "injected"
 	if required {
-		switch injectValue, _ := getAnnotation(metadata, annotationInjectKey); strings.ToLower(injectValue) {
+		injectValue, _ := getAnnotation(metadata, annotationInjectKey)
+		switch strings.ToLower(injectValue) {
 		case "y", "yes", "true", "on":
 			required = true
 		default:
@@ -42,7 +47,14 @@ func mutationRequired(ignoredList []string, metadata *metav1.ObjectMeta) bool {
 		}
 	}
 
-	log.Printf("Mutation policy for %v/%v: status: %q required:%v", metadata.Namespace, metadata.Name, status, required)
+	log.Printf(
+		"Mutation policy for %v/%v: status: %q required:%v",
+		metadata.Namespace,
+		metadata.Name,
+		status,
+		required,
+	)
+
 	return required
 }
 
@@ -107,5 +119,6 @@ func getServiceAccountTokenVolumeName(pod *corev1.Pod) (string, error) {
 			}
 		}
 	}
-	return "", errors.New("Service account token volume mount not found")
+
+	return "", errors.New("service account token volume mount not found")
 }

@@ -13,4 +13,5 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   The selection of containers are specified via the
   `sidecar-injector.cyberark.com/conjurTokenReceivers` annotation whose value is a
   comma-separated list of container names.
-- Ability to configure the sidecar container images by specifying flags on the sidecar injector binary [#29](https://github.com/cyberark/sidecar-injector/issues/29).
+- Ability to configure the sidecar container images by specifying flags on the sidecar
+  injector binary [#29](https://github.com/cyberark/sidecar-injector/issues/29).

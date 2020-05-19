@@ -18,10 +18,9 @@
         }
       },
       {
-        "name": "secretless-config",
-        "configMap": {
-          "name": "secretless-config",
-          "defaultMode": 420
+        "name": "conjur-access-token",
+        "emptyDir": {
+          "medium": "Memory"
         }
       }
     ],
@@ -45,17 +44,89 @@
             "name": "default-token-tq5lq",
             "readOnly": true,
             "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
+          },
+          {
+            "name": "conjur-access-token",
+            "readOnly": true,
+            "mountPath": "/run/conjur"
           }
         ]
       },
       {
-        "name": "secretless",
-        "image": "secretless-image",
-        "args": [
-          "-config-mgr",
-          "configfile#/etc/secretless/secretless.yml"
-        ],
+        "name": "authenticator-name",
+        "image": "authenticator-image",
         "env": [
+          {
+            "name": "CONJUR_ACCOUNT",
+            "valueFrom": {
+              "configMapKeyRef": {
+                "name": "conjur",
+                "key": "CONJUR_ACCOUNT"
+              }
+            }
+          },
+          {
+            "name": "CONJUR_APPLIANCE_URL",
+            "valueFrom": {
+              "configMapKeyRef": {
+                "name": "conjur",
+                "key": "CONJUR_APPLIANCE_URL"
+              }
+            }
+          },
+          {
+            "name": "CONJUR_AUTHN_LOGIN",
+            "valueFrom": {
+              "configMapKeyRef": {
+                "name": "conjur",
+                "key": "CONJUR_AUTHN_LOGIN"
+              }
+            }
+          },
+          {
+            "name": "CONJUR_AUTHN_TOKEN_FILE",
+            "value": "/run/conjur/conjur-access-token"
+          },
+          {
+            "name": "CONJUR_AUTHN_URL",
+            "valueFrom": {
+              "configMapKeyRef": {
+                "name": "conjur",
+                "key": "CONJUR_AUTHN_URL"
+              }
+            }
+          },
+          {
+            "name": "CONJUR_SSL_CERTIFICATE",
+            "valueFrom": {
+              "configMapKeyRef": {
+                "name": "conjur",
+                "key": "CONJUR_SSL_CERTIFICATE"
+              }
+            }
+          },
+          {
+            "name": "CONJUR_VERSION",
+            "valueFrom": {
+              "configMapKeyRef": {
+                "name": "conjur",
+                "key": "CONJUR_VERSION"
+              }
+            }
+          },
+          {
+            "name": "CONTAINER_MODE",
+            "value": "sidecar"
+          },
+          {
+            "name": "MY_POD_IP",
+            "valueFrom": {
+              "fieldRef": {
+                "apiVersion": "v1",
+                "fieldPath": "status.podIP"
+              }
+            }
+          },
           {
             "name": "MY_POD_NAME",
             "valueFrom": {
@@ -73,82 +144,13 @@
                 "fieldPath": "metadata.namespace"
               }
             }
-          },
-          {
-            "name": "MY_POD_IP",
-            "valueFrom": {
-              "fieldRef": {
-                "apiVersion": "v1",
-                "fieldPath": "status.podIP"
-              }
-            }
-          },
-          {
-            "name": "CONJUR_VERSION",
-            "valueFrom": {
-              "configMapKeyRef": {
-                "name": "conjur",
-                "key": "CONJUR_VERSION"
-              }
-            }
-          },
-          {
-            "name": "CONJUR_APPLIANCE_URL",
-            "valueFrom": {
-              "configMapKeyRef": {
-                "name": "conjur",
-                "key": "CONJUR_APPLIANCE_URL"
-              }
-            }
-          },
-          {
-            "name": "CONJUR_AUTHN_URL",
-            "valueFrom": {
-              "configMapKeyRef": {
-                "name": "conjur",
-                "key": "CONJUR_AUTHN_URL"
-              }
-            }
-          },
-          {
-            "name": "CONJUR_ACCOUNT",
-            "valueFrom": {
-              "configMapKeyRef": {
-                "name": "conjur",
-                "key": "CONJUR_ACCOUNT"
-              }
-            }
-          },
-          {
-            "name": "CONJUR_SSL_CERTIFICATE",
-            "valueFrom": {
-              "configMapKeyRef": {
-                "name": "conjur",
-                "key": "CONJUR_SSL_CERTIFICATE"
-              }
-            }
-          },
-          {
-            "name": "CONJUR_AUTHN_LOGIN",
-            "valueFrom": {
-              "configMapKeyRef": {
-                "name": "conjur",
-                "key": "CONJUR_AUTHN_LOGIN"
-              }
-            }
           }
         ],
         "resources": {},
         "volumeMounts": [
           {
-            "name": "default-token-tq5lq",
-            "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
-            "readOnly": true
-          },
-          {
-            "name": "secretless-config",
-            "mountPath": "/etc/secretless",
-            "readOnly": true
+            "name": "conjur-access-token",
+            "mountPath": "/run/conjur"
           }
         ],
         "terminationMessagePath": "/dev/termination-log",

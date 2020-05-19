@@ -34,7 +34,8 @@ func init() {
 	_ = v1.AddToScheme(runtimeScheme)
 }
 
-// applyDefaultsWorkaround applies a defaulting on Container and Volume specs to address this issue (https://github.com/kubernetes/kubernetes/issues/57982)
+// applyDefaultsWorkaround applies a defaulting on Container and Volume specs to address
+// this issue (https://github.com/kubernetes/kubernetes/issues/57982)
 func applyDefaultsWorkaround(containers []corev1.Container, volumes []corev1.Volume) {
 	defaulter.Default(&corev1.Pod{
 		Spec: corev1.PodSpec{
@@ -56,12 +57,13 @@ type WebhookServer struct {
 
 // Webhook Server parameters
 type WebhookServerParameters struct {
-	NoTLS    bool   // disables TLS
-	Port     int    // webhook Server port
-	CertFile string // path to the x509 certificate for https
-	KeyFile  string // path to the x509 private key matching `CertFile`
-	SecretlessContainerImage  string // Container image for the Secretless sidecar
-	AuthenticatorContainerImage  string // Container image for the Kubernetes Authenticator sidecar
+	NoTLS                       bool   // disables TLS
+	Port                        int    // webhook Server port
+	CertFile                    string // path to the x509 certificate for https
+	KeyFile                     string // path to the x509 private key matching `CertFile`
+	SecretlessContainerImage    string // Container image for the Secretless sidecar
+	AuthenticatorContainerImage string // Container image for the Kubernetes Authenticator
+	// sidecar
 }
 
 func failWithResponse(errMsg string) v1beta1.AdmissionResponse {
@@ -75,8 +77,9 @@ func failWithResponse(errMsg string) v1beta1.AdmissionResponse {
 
 // SidecarInjectorConfig are configuration values for the sidecar injector logic
 type SidecarInjectorConfig struct {
-	SecretlessContainerImage  string // Container image for the Secretless sidecar
-	AuthenticatorContainerImage  string // Container image for the Kubernetes Authenticator sidecar
+	SecretlessContainerImage    string // Container image for the Secretless sidecar
+	AuthenticatorContainerImage string // Container image for the Kubernetes Authenticator
+	// sidecar
 }
 
 // HandleAdmissionRequest applies the sidecar-injector logic to the AdmissionRequest
@@ -91,15 +94,29 @@ func HandleAdmissionRequest(
 
 	var pod corev1.Pod
 	if err := json.Unmarshal(req.Object.Raw, &pod); err != nil {
-		return failWithResponse(fmt.Sprintf("Could not unmarshal raw object: %v", err))
+		return failWithResponse(
+			fmt.Sprintf("Could not unmarshal raw object: %v", err),
+		)
 	}
 
-	log.Printf("AdmissionReview for Kind=%v, Namespace=%v PodName=%v UID=%v rfc6902PatchOperation=%v UserInfo=%v",
-		req.Kind, req.Namespace, metaName(&pod.ObjectMeta), req.UID, req.Operation, req.UserInfo)
+	log.Printf(
+		"AdmissionReview for Kind=%v, Namespace=%v PodName=%v UID=%v rfc6902PatchOperation=%v UserInfo=%v",
+		req.Kind,
+		req.Namespace,
+		metaName(&pod.ObjectMeta),
+		req.UID,
+		req.Operation,
+		req.UserInfo,
+	)
 
-	// determine whether to perform mutation
+	// Determine whether to perform mutation
 	if !mutationRequired(ignoredNamespaces, &pod.ObjectMeta) {
-		log.Printf("Skipping mutation for %s/%s due to policy check", req.Namespace, pod.Name)
+		log.Printf(
+			"Skipping mutation for %s/%s due to policy check",
+			req.Namespace,
+			pod.Name,
+		)
+
 		return v1beta1.AdmissionResponse{
 			Allowed: true,
 		}
@@ -121,17 +138,40 @@ func HandleAdmissionRequest(
 	switch injectType {
 	case "secretless":
 
-		secretlessConfig, err := getAnnotation(&pod.ObjectMeta, annotationSecretlessConfigKey)
-        if err != nil {
-            return failWithResponse(fmt.Sprintf("Mutation failed for pod %s, in namespace %s, due to %s", pod.Name, req.Namespace, err.Error()))
-        }
+		secretlessConfig, err := getAnnotation(
+			&pod.ObjectMeta,
+			annotationSecretlessConfigKey,
+		)
+		if err != nil {
+			return failWithResponse(
+				fmt.Sprintf(
+					"Mutation failed for pod %s, in namespace %s, due to %s",
+					pod.Name,
+					req.Namespace,
+					err.Error(),
+				),
+			)
+		}
 
-        conjurConnConfigMapName, _ := getAnnotation(&pod.ObjectMeta, annotationConjurConnConfigKey)
-        conjurAuthConfigMapName, _ := getAnnotation(&pod.ObjectMeta, annotationConjurAuthConfigKey)
+		conjurConnConfigMapName, _ := getAnnotation(
+			&pod.ObjectMeta,
+			annotationConjurConnConfigKey,
+		)
+		conjurAuthConfigMapName, _ := getAnnotation(
+			&pod.ObjectMeta,
+			annotationConjurAuthConfigKey,
+		)
 
 		ServiceAccountTokenVolumeName, err := getServiceAccountTokenVolumeName(&pod)
 		if err != nil {
-			return failWithResponse(fmt.Sprintf("Mutation failed for pod %s, in namespace %s, due to %s", pod.Name, req.Namespace, err.Error()))
+			return failWithResponse(
+				fmt.Sprintf(
+					"Mutation failed for pod %s, in namespace %s, due to %s",
+					pod.Name,
+					req.Namespace,
+					err.Error(),
+				),
+			)
 		}
 
 		sidecarConfig = generateSecretlessSidecarConfig(
@@ -140,52 +180,86 @@ func HandleAdmissionRequest(
 				conjurConnConfigMapName:       conjurConnConfigMapName,
 				conjurAuthConfigMapName:       conjurAuthConfigMapName,
 				serviceAccountTokenVolumeName: ServiceAccountTokenVolumeName,
-				sidecarImage: sidecarInjectorConfig.SecretlessContainerImage,
+				sidecarImage:                  sidecarInjectorConfig.SecretlessContainerImage,
 			},
 		)
 		break
 	case "authenticator":
-        conjurAuthConfigMapName, err := getAnnotation(&pod.ObjectMeta, annotationConjurAuthConfigKey)
-        if err != nil {
-            return failWithResponse(fmt.Sprintf("Mutation failed for pod %s, in namespace %s, due to %s", pod.Name, req.Namespace, err.Error()))
-        }
+		conjurAuthConfigMapName, err := getAnnotation(
+			&pod.ObjectMeta,
+			annotationConjurAuthConfigKey,
+		)
+		if err != nil {
+			return failWithResponse(
+				fmt.Sprintf(
+					"Mutation failed for pod %s, in namespace %s, due to %s",
+					pod.Name,
+					req.Namespace,
+					err.Error(),
+				),
+			)
+		}
 
-        conjurConnConfigMapName, err := getAnnotation(&pod.ObjectMeta, annotationConjurConnConfigKey)
-        if err != nil {
-            return failWithResponse(fmt.Sprintf("Mutation failed for pod %s, in namespace %s, due to %s", pod.Name, req.Namespace, err.Error()))
-        }
+		conjurConnConfigMapName, err := getAnnotation(
+			&pod.ObjectMeta,
+			annotationConjurConnConfigKey,
+		)
+		if err != nil {
+			return failWithResponse(
+				fmt.Sprintf(
+					"Mutation failed for pod %s, in namespace %s, due to %s",
+					pod.Name,
+					req.Namespace,
+					err.Error(),
+				),
+			)
+		}
 
-        switch containerMode {
-        case "sidecar", "init", "":
-            break;
-        default:
-            return failWithResponse(fmt.Sprintf("Mutation failed for pod %s, in namespace %s, due to %s value (%s) not supported", pod.Name, req.Namespace, annotationContainerModeKey, containerMode))
-        }
+		switch containerMode {
+		case "sidecar", "init", "":
+			break;
+		default:
+			return failWithResponse(
+				fmt.Sprintf(
+					"Mutation failed for pod %s, in namespace %s, due to %s value (%s) not supported",
+					pod.Name,
+					req.Namespace,
+					annotationContainerModeKey,
+					containerMode,
+				),
+			)
+		}
 
-        sidecarConfig = generateAuthenticatorSidecarConfig(AuthenticatorSidecarConfig{
-            conjurConnConfigMapName: conjurConnConfigMapName,
-            conjurAuthConfigMapName: conjurAuthConfigMapName,
-            containerMode:           containerMode,
-            containerName:           containerName,
-            sidecarImage: 		     sidecarInjectorConfig.AuthenticatorContainerImage,
-        })
+		sidecarConfig = generateAuthenticatorSidecarConfig(AuthenticatorSidecarConfig{
+			conjurConnConfigMapName: conjurConnConfigMapName,
+			conjurAuthConfigMapName: conjurAuthConfigMapName,
+			containerMode:           containerMode,
+			containerName:           containerName,
+			sidecarImage:            sidecarInjectorConfig.AuthenticatorContainerImage,
+		})
 
-        containerVolumeMounts := ContainerVolumeMounts{}
-        for _, receiveContainerName := range conjurTokenReceivers {
+		containerVolumeMounts := ContainerVolumeMounts{}
+		for _, receiveContainerName := range conjurTokenReceivers {
 			containerVolumeMounts[receiveContainerName] = []corev1.VolumeMount{
 				{
-					Name:             "conjur-access-token",
-					ReadOnly:         true,
-					MountPath:        "/run/conjur",
+					Name:      "conjur-access-token",
+					ReadOnly:  true,
+					MountPath: "/run/conjur",
 				},
 			}
 		}
-        sidecarConfig.ContainerVolumeMounts = containerVolumeMounts
+		sidecarConfig.ContainerVolumeMounts = containerVolumeMounts
 
-        break;
+		break;
 	default:
-		errMsg := fmt.Sprintf("Mutation failed for pod %s, in namespace %s, due to invalid inject type annotation value = %s", pod.Name, req.Namespace, injectType)
+		errMsg := fmt.Sprintf(
+			"Mutation failed for pod %s, in namespace %s, due to invalid inject type annotation value = %s",
+			pod.Name,
+			req.Namespace,
+			injectType,
+		)
 		log.Printf(errMsg)
+
 		return v1beta1.AdmissionResponse{
 			Result: &metav1.Status{
 				Message: errMsg,
@@ -265,7 +339,8 @@ func (whsvr *WebhookServer) Serve(w http.ResponseWriter, r *http.Request) {
 		)
 	}
 
-	// Ensure the response has the same UID as the original request (if the request field was populated)
+	// Ensure the response has the same UID as the original request (if the request field
+	// was populated)
 	admissionResponse.UID = admissionRequest.UID
 
 	// Wrap AdmissonResponse in AdmissionReview, then marshal it to JSON
@@ -287,7 +362,7 @@ func (whsvr *WebhookServer) Serve(w http.ResponseWriter, r *http.Request) {
 // actually comes wrapped inside the bytes of an AdmissionReview.
 func NewAdmissionRequest(reviewRequestBytes []byte) (*v1beta1.AdmissionRequest, error) {
 	var ar v1beta1.AdmissionReview
-	 _, _, err := deserializer.Decode(reviewRequestBytes, nil, &ar)
+	_, _, err := deserializer.Decode(reviewRequestBytes, nil, &ar)
 
 	return ar.Request, err
 }
