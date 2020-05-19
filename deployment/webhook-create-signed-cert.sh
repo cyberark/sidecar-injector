@@ -46,12 +46,12 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
-if [ -z ${service} ] || [ -z ${secret} ] || [ -z ${namespace} ]
+if [[ -z ${service} ]] || [[ -z ${secret} ]] || [[ -z ${namespace} ]]
 then
     usage
 fi
 
-if [ ! -x "$(command -v openssl)" ]; then
+if [[ ! -x "$(command -v openssl)" ]]; then
     echo "openssl not found"
     exit 1
 fi

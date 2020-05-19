@@ -1,37 +1,87 @@
 package inject
 
 import (
-	"os"
 	"fmt"
-	corev1 "k8s.io/api/core/v1"
+	"os"
+	"sort"
 	"strings"
+
+	corev1 "k8s.io/api/core/v1"
 )
 
-// generateSecretlessSidecarConfig generates PatchConfig from a given secretlessConfigMapName
-func generateSecretlessSidecarConfig(secretlessConfig, conjurConnConfigMapName, conjurAuthConfigMapName, ServiceAccountTokenVolumeName string) *PatchConfig {
+type SecretlessSidecarConfig struct {
+	secretlessConfig              string
+	conjurConnConfigMapName       string
+	conjurAuthConfigMapName       string
+	serviceAccountTokenVolumeName string
+	sidecarImage                  string
+}
+
+// generateSecretlessSidecarConfig generates PatchConfig from a given
+// secretlessConfigMapName
+func generateSecretlessSidecarConfig(cfg SecretlessSidecarConfig) *PatchConfig {
 	envvars := []corev1.EnvVar{
-		envVarFromFieldPath("MY_POD_NAME", "metadata.name"),
-		envVarFromFieldPath("MY_POD_NAMESPACE", "metadata.namespace"),
-		envVarFromFieldPath("MY_POD_IP", "status.podIP"),
-		envVarFromLiteral("SECRETLESS_CRD_SUFFIX", os.Getenv("SECRETLESS_CRD_SUFFIX")),
+		envVarFromFieldPath(
+			"MY_POD_IP", "status.podIP",
+		),
+		envVarFromFieldPath(
+			"MY_POD_NAME", "metadata.name",
+		),
+		envVarFromFieldPath(
+			"MY_POD_NAMESPACE", "metadata.namespace",
+		),
 	}
 
-	if conjurConnConfigMapName != "" || conjurAuthConfigMapName != "" {
-		envvars = append(envvars,
-			envVarFromConfigMap("CONJUR_VERSION", conjurConnConfigMapName),
-			envVarFromConfigMap("CONJUR_APPLIANCE_URL", conjurConnConfigMapName),
-			envVarFromConfigMap("CONJUR_AUTHN_URL", conjurConnConfigMapName),
-			envVarFromConfigMap("CONJUR_ACCOUNT", conjurConnConfigMapName),
-			envVarFromConfigMap("CONJUR_SSL_CERTIFICATE", conjurConnConfigMapName),
-			envVarFromConfigMap("CONJUR_AUTHN_LOGIN", conjurAuthConfigMapName))
+	if crdSuffix, ok := os.LookupEnv("SECRETLESS_CRD_SUFFIX"); ok && crdSuffix != "" {
+		envvars = append(
+			envvars,
+			envVarFromLiteral(
+				"SECRETLESS_CRD_SUFFIX",
+				crdSuffix,
+			),
+		)
 	}
+
+	if cfg.conjurConnConfigMapName != "" || cfg.conjurAuthConfigMapName != "" {
+		envvars = append(envvars,
+			envVarFromConfigMap(
+				"CONJUR_ACCOUNT",
+				cfg.conjurConnConfigMapName,
+			),
+			envVarFromConfigMap(
+				"CONJUR_APPLIANCE_URL",
+				cfg.conjurConnConfigMapName,
+			),
+			envVarFromConfigMap(
+				"CONJUR_AUTHN_LOGIN",
+				cfg.conjurAuthConfigMapName,
+			),
+			envVarFromConfigMap(
+				"CONJUR_AUTHN_URL",
+				cfg.conjurConnConfigMapName,
+			),
+			envVarFromConfigMap(
+				"CONJUR_SSL_CERTIFICATE",
+				cfg.conjurConnConfigMapName,
+			),
+			envVarFromConfigMap(
+				"CONJUR_VERSION",
+				cfg.conjurConnConfigMapName,
+			),
+		)
+	}
+
+	// Sort envvars lexicographically
+	sort.Slice(envvars, func(i, j int) bool {
+		return envvars[i].Name < envvars[j].Name
+	})
 
 	// Allow configmgr#configspec in the SecretlessConfig annotation
 	var configMgr string
 	var configSpec string
 	var secretlessConfigMapName string
 	secretlessConfigPath := "/etc/secretless/secretless.yml"
-	volumes := []corev1.Volume{}
+	var volumes []corev1.Volume
 
 	// Always add Service Account Token Volume Mount (SATVM)
 	// It shouldn't be sidecar-injector's responsibility to add the SATVM, we only
@@ -46,7 +96,7 @@ func generateSecretlessSidecarConfig(secretlessConfig, conjurConnConfigMapName, 
 	// and calls to that in server.go
 	volumeMounts := []corev1.VolumeMount{
 		{
-			Name:      ServiceAccountTokenVolumeName,
+			Name:      cfg.serviceAccountTokenVolumeName,
 			ReadOnly:  true,
 			MountPath: "/var/run/secrets/kubernetes.io/serviceaccount",
 		},
@@ -60,9 +110,9 @@ func generateSecretlessSidecarConfig(secretlessConfig, conjurConnConfigMapName, 
 	// #2 Can't be passed straight through to the broker as its
 	// expecting configfile#fspath
 
-	if strings.Contains(secretlessConfig, "#") {
+	if strings.Contains(cfg.secretlessConfig, "#") {
 		// configmgr#configspec
-		parts := strings.Split(secretlessConfig, "#")
+		parts := strings.Split(cfg.secretlessConfig, "#")
 		configMgr = parts[0]
 		configSpec = parts[1]
 
@@ -75,7 +125,7 @@ func generateSecretlessSidecarConfig(secretlessConfig, conjurConnConfigMapName, 
 		// option 1
 		// Old format, contains config map name only.
 		configMgr = "configfile"
-		secretlessConfigMapName = secretlessConfig
+		secretlessConfigMapName = cfg.secretlessConfig
 		configSpec = secretlessConfigPath
 	}
 
@@ -95,7 +145,7 @@ func generateSecretlessSidecarConfig(secretlessConfig, conjurConnConfigMapName, 
 		},
 		)
 
-		// add configmap mount
+		// Add configmap mount
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
 			Name:      "secretless-config",
 			ReadOnly:  true,
@@ -107,8 +157,11 @@ func generateSecretlessSidecarConfig(secretlessConfig, conjurConnConfigMapName, 
 	containers := []corev1.Container{
 		{
 			Name:            "secretless",
-			Image:           "cyberark/secretless-broker:latest",
-			Args:            []string{"-config-mgr", fmt.Sprintf("%s#%s", configMgr, configSpec)},
+			Image:           cfg.sidecarImage,
+			Args:            []string{
+				"-config-mgr",
+				fmt.Sprintf("%s#%s", configMgr, configSpec),
+			},
 			ImagePullPolicy: "Always",
 			VolumeMounts:    volumeMounts,
 			Env:             envvars,

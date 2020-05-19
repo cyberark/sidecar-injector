@@ -93,6 +93,8 @@ The docker image entrypoint is the server binary. The binary supports the follow
 -tlsKeyFile=/etc/webhook/certs/key.pem            
 -noTLS=false
 -port=8080
+-secretless-image=/path/to/secretless/image
+-authenticator-image=/path/to/authentiator/image
 ```
 
 ## Installation
@@ -133,7 +135,16 @@ Create a namespace `injectors`, where you will deploy the CyberArk Sidecar Injec
         deployment/mutatingwebhook-ca-bundle.yaml
     ```
 
-3. Deploy resources
+3. Generate sidecar injector deployment manifest
+    ```bash
+    ~$ ./deployment/deployment.yaml.sh \
+         --sidecar-injector-image cyberark/sidecar-injector:latest \
+         --secretless-image cyberark/secretless-broker:latest \
+         --authenticator-image cyberark/conjur-kubernetes-authenticator:latest \
+         > ./deployment/deployment.yaml
+    ```
+
+4. Deploy resources
     ```bash
     ~$ kubectl -n injectors apply -f deployment/deployment.yaml
     ~$ kubectl -n injectors apply -f deployment/service.yaml
@@ -161,7 +172,7 @@ Create a namespace `injectors`, where you will deploy the CyberArk Sidecar Injec
 
 ### Installing the Sidecar Injector (Helm)
 
-+ [Helm](https://docs.helm.sh/using_helm/) is **required**
++ [Helm v2](https://v2.helm.sh/docs/) is **required**
 
 To install the sidecar injector in the `injectors` namespace run the following:
 
@@ -176,6 +187,22 @@ helm --namespace injectors \
  ./charts/cyberark-sidecar-injector/
 ```
 
+Optionally, if you want to specify the Secretless and/or Conjur Authenticator Docker image
+references, you can specify this in the `helm install` command:
+```
+helm --namespace injectors \
+ install \
+ --set "caBundle=$(kubectl -n kube-system \
+    get configmap \
+    extension-apiserver-authentication \
+    -o=jsonpath='{.data.client-ca-file}' \
+  )" \
+ --set secretless-image=path/to/secretless/container/image/repo/and/tag" \
+ --set authenticator-image=path/to/authenticator/container/image/repo/and/tag" \
+ ./charts/cyberark-sidecar-injector/
+```
+
+Below is example output from the `helm install` command:
 ```
 ...
 

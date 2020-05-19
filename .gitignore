@@ -12,4 +12,7 @@
 
 vendor/*
 
+# Generated files
 deployment/mutatingwebhook-ca-bundle.yaml
+deployment/deployment.yaml
+tests/echoserver.yaml

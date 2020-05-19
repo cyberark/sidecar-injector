@@ -10,7 +10,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/cyberark/secretless-broker/sidecar-injector/pkg/inject"
+	"github.com/cyberark/sidecar-injector/pkg/inject"
 )
 
 func main() {
@@ -21,9 +21,12 @@ func main() {
 	flag.StringVar(&parameters.CertFile, "tlsCertFile", "/etc/webhook/certs/cert.pem", "File containing the x509 Certificate for HTTPS.")
 	flag.StringVar(&parameters.KeyFile, "tlsKeyFile", "/etc/webhook/certs/key.pem", "File containing the x509 private key to --tlsCertFile.")
 	flag.BoolVar(&parameters.NoTLS, "noTLS", false, "Disable SSL and ignore any certs.")
+	flag.StringVar(&parameters.SecretlessContainerImage, "secretless-image", "cyberark/secretless-broker:latest", "Container image for the Secretless sidecar")
+	flag.StringVar(&parameters.AuthenticatorContainerImage, "authenticator-image", "cyberark/conjur-kubernetes-authenticator:latest", "Container image for the Kubernetes Authenticator sidecar")
 	flag.Parse()
 
 	whsvr := &inject.WebhookServer{
+		Params: parameters,
 		Server: &http.Server{
 			Addr:      fmt.Sprintf(":%v", parameters.Port),
 			TLSConfig: nil,

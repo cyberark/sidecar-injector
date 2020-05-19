@@ -12,7 +12,7 @@
       "sidecar-injector.cyberark.com/conjurTokenReceivers": "nginx-2",
       "sidecar-injector.cyberark.com/inject": "true",
       "sidecar-injector.cyberark.com/injectType": "authenticator",
-      "sidecar-injector.cyberark.com/containerName": "authenticator"
+      "sidecar-injector.cyberark.com/containerName": "authenticator-name"
     }
   },
   "spec": {

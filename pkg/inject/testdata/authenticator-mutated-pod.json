@@ -53,9 +53,80 @@
         ]
       },
       {
-        "name": "authenticator",
-        "image": "cyberark/conjur-kubernetes-authenticator:latest",
+        "name": "authenticator-name",
+        "image": "authenticator-image",
         "env": [
+          {
+            "name": "CONJUR_ACCOUNT",
+            "valueFrom": {
+              "configMapKeyRef": {
+                "name": "conjur",
+                "key": "CONJUR_ACCOUNT"
+              }
+            }
+          },
+          {
+            "name": "CONJUR_APPLIANCE_URL",
+            "valueFrom": {
+              "configMapKeyRef": {
+                "name": "conjur",
+                "key": "CONJUR_APPLIANCE_URL"
+              }
+            }
+          },
+          {
+            "name": "CONJUR_AUTHN_LOGIN",
+            "valueFrom": {
+              "configMapKeyRef": {
+                "name": "conjur",
+                "key": "CONJUR_AUTHN_LOGIN"
+              }
+            }
+          },
+          {
+            "name": "CONJUR_AUTHN_TOKEN_FILE",
+            "value": "/run/conjur/conjur-access-token"
+          },
+          {
+            "name": "CONJUR_AUTHN_URL",
+            "valueFrom": {
+              "configMapKeyRef": {
+                "name": "conjur",
+                "key": "CONJUR_AUTHN_URL"
+              }
+            }
+          },
+          {
+            "name": "CONJUR_SSL_CERTIFICATE",
+            "valueFrom": {
+              "configMapKeyRef": {
+                "name": "conjur",
+                "key": "CONJUR_SSL_CERTIFICATE"
+              }
+            }
+          },
+          {
+            "name": "CONJUR_VERSION",
+            "valueFrom": {
+              "configMapKeyRef": {
+                "name": "conjur",
+                "key": "CONJUR_VERSION"
+              }
+            }
+          },
+          {
+            "name": "CONTAINER_MODE",
+            "value": "sidecar"
+          },
+          {
+            "name": "MY_POD_IP",
+            "valueFrom": {
+              "fieldRef": {
+                "apiVersion": "v1",
+                "fieldPath": "status.podIP"
+              }
+            }
+          },
           {
             "name": "MY_POD_NAME",
             "valueFrom": {
@@ -73,77 +144,6 @@
                 "fieldPath": "metadata.namespace"
               }
             }
-          },
-          {
-            "name": "MY_POD_IP",
-            "valueFrom": {
-              "fieldRef": {
-                "apiVersion": "v1",
-                "fieldPath": "status.podIP"
-              }
-            }
-          },
-          {
-            "name": "CONJUR_AUTHN_TOKEN_FILE",
-            "value": "/run/conjur/conjur-access-token"
-          },
-          {
-            "name": "CONTAINER_MODE",
-            "value": "sidecar"
-          },
-          {
-            "name": "CONJUR_VERSION",
-            "valueFrom": {
-              "configMapKeyRef": {
-                "name": "conjur",
-                "key": "CONJUR_VERSION"
-              }
-            }
-          },
-          {
-            "name": "CONJUR_APPLIANCE_URL",
-            "valueFrom": {
-              "configMapKeyRef": {
-                "name": "conjur",
-                "key": "CONJUR_APPLIANCE_URL"
-              }
-            }
-          },
-          {
-            "name": "CONJUR_AUTHN_URL",
-            "valueFrom": {
-              "configMapKeyRef": {
-                "name": "conjur",
-                "key": "CONJUR_AUTHN_URL"
-              }
-            }
-          },
-          {
-            "name": "CONJUR_ACCOUNT",
-            "valueFrom": {
-              "configMapKeyRef": {
-                "name": "conjur",
-                "key": "CONJUR_ACCOUNT"
-              }
-            }
-          },
-          {
-            "name": "CONJUR_SSL_CERTIFICATE",
-            "valueFrom": {
-              "configMapKeyRef": {
-                "name": "conjur",
-                "key": "CONJUR_SSL_CERTIFICATE"
-              }
-            }
-          },
-          {
-            "name": "CONJUR_AUTHN_LOGIN",
-            "valueFrom": {
-              "configMapKeyRef": {
-                "name": "conjur",
-                "key": "CONJUR_AUTHN_LOGIN"
-              }
-            }
           }
         ],
         "resources": {},
@@ -155,7 +155,7 @@
         ],
         "terminationMessagePath": "/dev/termination-log",
         "terminationMessagePolicy": "File",
-        "imagePullPolicy": "IfNotPresent"
+        "imagePullPolicy": "Always"
       }
     ]
   }
