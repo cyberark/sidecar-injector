@@ -1,15 +1,67 @@
-#!/bin/bash -e
-#
-# Push CyberArk sidecar injector mutating webhook service
-# usage: ./bin/publish
-set -ex
+#!/bin/bash
 
-if [ -z "$1" ]
-then
-    echo "tag not provided";
-    exit 1;
-fi
+set -eu
 
-cd $(dirname $0)/..
+cd "$(dirname "${0}")"
+. ./build_utils
+cd ..
 
-docker push cyberark/sidecar-injector:$1
+readonly IMAGE_NAME="cyberark/sidecar-injector"
+readonly IMAGE_WITH_TAG="${IMAGE_NAME}:$(git_tag)"
+
+function publish_image() {
+  local tag=${1}
+  image_with_version_tag="${IMAGE_NAME}:${tag}"
+  echo "Tagging and pushing ${image_with_version_tag}"
+
+  docker tag "${IMAGE_WITH_TAG}" "${image_with_version_tag}"
+  docker push "${image_with_version_tag}"
+}
+
+function main() {
+  # If an argument is passed to the script it will be read as a tag, and this single tag
+  # will be published then the script will exit. This functionality is useful for
+  # publishing single tags without involving the tag-triggered builds logic below.
+  if [[ $# -gt 0 ]]
+  then
+      publish_image $1
+      exit 0;
+  fi
+
+  if [[ -z "${TAG_NAME:-}" ]]; then
+    echo "Please supply environment variable TAG_NAME."
+    echo "If you see this error in Jenkins it means the publish script was run"
+    echo "for a build that wasn't triggered by a tag - please check publish stage conditions."
+    exit 1
+  fi
+
+  # Accumulate TAGS
+  #
+
+  local VERSION="${TAG_NAME#v}"
+  local TAGS=(
+    "${VERSION}"
+  )
+
+  # Add less specific version tags, eg. given 1.2.3, add 1.2 and 1
+  for tag in $(gen_versions "${VERSION}"); do
+    TAGS+=("${tag}")
+  done
+
+  # Add 'latest' tag only when TAG_NAME is the highest semantic tag
+  local LATEST_TAG
+  LATEST_TAG="$(git tag | sort -r --version-sort)"
+  if [[ "${TAG_NAME}" == "${LATEST_TAG}" ]]; then
+    TAGS+=('latest')
+  fi
+
+  # Publish
+  #
+
+  # Publish tags
+  for tag in "${TAGS[@]}"; do
+    publish_image "${tag}"
+  done
+}
+
+main "$@"

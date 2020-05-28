@@ -4,8 +4,13 @@
 # usage: ./bin/build
 set -ex
 
-tag="${1:-latest}"
+cd "$(dirname "${0}")"
+. ./build_utils
+cd ..
 
-cd "$(dirname "${0}")"/..
-
-docker build -t cyberark/sidecar-injector:"${tag}" -t sidecar-injector:"${tag}" .
+readonly tag=$(git_tag)
+docker build \
+  -t cyberark/sidecar-injector:latest \
+  -t sidecar-injector:latest \
+  -t cyberark/sidecar-injector:"${tag}" \
+  -t sidecar-injector:"${tag}" .

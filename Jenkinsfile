@@ -13,9 +13,17 @@ pipeline {
   }
 
   stages {
+    stage('Validate') {
+      parallel {
+        stage('Changelog') {
+          steps { sh 'docker run --rm --volume "${PWD}/CHANGELOG.md":/CHANGELOG.md cyberark/parse-a-changelog' }
+        }
+      }
+    }
+
     stage('Image Build') {
       steps {
-        sh './bin/build latest'
+        sh './bin/build'
       }
     }
     stage('Test Sidecar Injector'){
@@ -39,13 +47,24 @@ pipeline {
       }
     }
 
-    stage('Publish Sidecar Injector Images') {
+
+    stage('Publish Edge Sidecar Injector Images') {
       when {
         branch 'master'
       }
 
       steps {
-        sh './bin/publish latest'
+        sh './bin/publish edge'
+      }
+    }
+
+    stage('Publish Tagged Sidecar Injector Images') {
+      agent { label 'releaser-v2' }
+      // Only run this stage when triggered by a tag
+      when { tag "v*" }
+      steps {
+        // The tag trigger sets TAG_NAME as an environment variable
+        sh './bin/publish'
       }
     }
 
