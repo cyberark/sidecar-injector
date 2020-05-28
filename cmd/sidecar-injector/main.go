@@ -16,14 +16,30 @@ import (
 func main() {
 	var parameters inject.WebhookServerParameters
 
+	// Reset flag package to avoid pollution by glog, which is an indirect dependency
+	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+
 	// retrieve command line parameters
 	flag.IntVar(&parameters.Port, "port", 443, "Webhook server port.")
-	flag.StringVar(&parameters.CertFile, "tlsCertFile", "/etc/webhook/certs/cert.pem", "File containing the x509 Certificate for HTTPS.")
-	flag.StringVar(&parameters.KeyFile, "tlsKeyFile", "/etc/webhook/certs/key.pem", "File containing the x509 private key to --tlsCertFile.")
-	flag.BoolVar(&parameters.NoTLS, "noTLS", false, "Disable SSL and ignore any certs.")
+	flag.StringVar(&parameters.CertFile, "tlsCertFile", "/etc/webhook/certs/cert.pem", "Path to file containing the x509 Certificate for HTTPS.")
+	flag.StringVar(&parameters.KeyFile, "tlsKeyFile", "/etc/webhook/certs/key.pem", "Path to file containing the x509 Private Key for HTTPS.")
+	flag.BoolVar(&parameters.NoHTTPS, "noHTTPS", false, "Run Webhook server as HTTP (not HTTPS).")
 	flag.StringVar(&parameters.SecretlessContainerImage, "secretless-image", "cyberark/secretless-broker:latest", "Container image for the Secretless sidecar")
 	flag.StringVar(&parameters.AuthenticatorContainerImage, "authenticator-image", "cyberark/conjur-kubernetes-authenticator:latest", "Container image for the Kubernetes Authenticator sidecar")
+
+	// Flag.parse only covers `-version` flag but for `version`, we need to explicitly
+	// check the args
+	showVersion := flag.Bool("version", false, "Show current version")
+
 	flag.Parse()
+
+	// Either the flag or the arg should be enough to show the version
+	if *showVersion || flag.Arg(0) == "version" {
+		fmt.Printf("cyberark-sidecar-injector v%s\n", FullVersionName)
+		return
+	}
+
+	log.Printf("cyberark-sidecar-injector v%s starting up...", FullVersionName)
 
 	whsvr := &inject.WebhookServer{
 		Params: parameters,
@@ -43,7 +59,7 @@ func main() {
 		log.Printf("Serving mutating admission webhook on %s", whsvr.Server.Addr)
 
 		var startServer func() error
-		if parameters.NoTLS {
+		if parameters.NoHTTPS {
 			startServer = func() error {
 				return whsvr.Server.ListenAndServe()
 			}

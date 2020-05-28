@@ -8,9 +8,10 @@ cd "$(dirname "${0}")"
 . ./build_utils
 cd ..
 
-readonly tag=$(git_tag)
+readonly IMAGE_NAME="sidecar-injector"
+
 docker build \
-  -t cyberark/sidecar-injector:latest \
-  -t sidecar-injector:latest \
-  -t cyberark/sidecar-injector:"${tag}" \
-  -t sidecar-injector:"${tag}" .
+  --build-arg "TAG=$(git_tag)" \
+  -t "${IMAGE_NAME}:latest" \
+  -t "${IMAGE_NAME}:$(full_version_tag)" \
+  .

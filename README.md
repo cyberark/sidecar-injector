@@ -89,12 +89,21 @@ The docker image for the mutating admission webhook server is publicly available
 
 The docker image entrypoint is the server binary. The binary supports the following flags:
 ```bash
--tlsCertFile=/etc/webhook/certs/cert.pem
--tlsKeyFile=/etc/webhook/certs/key.pem            
--noTLS=false
--port=8080
--secretless-image=/path/to/secretless/image
--authenticator-image=/path/to/authentiator/image
+Usage of cyberark-sidecar-injector:
+  -authenticator-image string
+        Container image for the Kubernetes Authenticator sidecar (default "cyberark/conjur-kubernetes-authenticator:latest")
+  -noHTTPS
+        Run Webhook server as HTTP (not HTTPS).
+  -port int
+        Webhook server port. (default 443)
+  -secretless-image string
+        Container image for the Secretless sidecar (default "cyberark/secretless-broker:latest")
+  -tlsCertFile string
+        Path to file containing the x509 Certificate for HTTPS. (default "/etc/webhook/certs/cert.pem")
+  -tlsKeyFile string
+        Path to file containing the x509 Private Key for HTTPS. (default "/etc/webhook/certs/key.pem")
+  -version
+        Show current version
 ```
 
 ## Installation
