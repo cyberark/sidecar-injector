@@ -4,14 +4,25 @@ ENV GO111MODULE=on
 RUN mkdir -p /work
 WORKDIR /work
 
-ADD go.* ./
-ADD pkg ./pkg
-ADD cmd ./cmd
+ENV GOOS=linux \
+    GOARCH=amd64 \
+    CGO_ENABLED=0
 
-RUN CGO_ENABLED=0 GOOS=linux \
-    go build -a -installsuffix cgo \
+COPY go.mod go.sum ./
+RUN go mod download
+
+# sidecar-injector source files
+COPY pkg ./pkg
+COPY cmd ./cmd
+
+ARG GIT_COMMIT_SHORT="dev"
+
+# The `gitCommitShort` override is there to provide the git commit information in the final
+# binary.
+RUN go build \
+    -ldflags="-X github.com/cyberark/sidecar-injector/pkg/version.gitCommitShort=$GIT_COMMIT_SHORT" \
     -o cyberark-sidecar-injector \
-    ./cmd/sidecar-injector/main.go
+    ./cmd/sidecar-injector
 
 FROM alpine:3.8
 

@@ -4,8 +4,14 @@
 # usage: ./bin/build
 set -ex
 
-tag="${1:-latest}"
+cd "$(dirname "${0}")"
+. ./build_utils
+cd ..
 
-cd "$(dirname "${0}")"/..
+readonly IMAGE_NAME="sidecar-injector"
 
-docker build -t cyberark/sidecar-injector:"${tag}" -t sidecar-injector:"${tag}" .
+docker build \
+  --build-arg "GIT_COMMIT_SHORT=$(git_commit_short)" \
+  -t "${IMAGE_NAME}:latest" \
+  -t "${IMAGE_NAME}:$(full_version_tag)" \
+  .

@@ -1,0 +1,31 @@
+#!/bin/bash
+
+set -euo pipefail
+
+####
+# Functions to generate version numbers for this project
+####
+
+readonly VERSION_GO_FILE="pkg/version/version.go"
+
+function git_version() {
+  grep -v '^//' "${VERSION_GO_FILE}" | grep 'const gitVersion =' | awk -F'= ' '{print $2}' | tr -d '"'
+}
+
+function git_commit_short() {
+  git rev-parse --short HEAD
+}
+
+function full_version_tag() {
+  echo "$(git_version)-$(git_commit_short)"
+}
+
+# generate less specific versions, eg. given 1.2.3 will print 1.2 and 1
+# (note: the argument itself is not printed, append it explicitly if needed)
+function gen_versions() {
+  local version=$1
+  while [[ $version = *.* ]]; do
+    version=${version%.*}
+    echo $version
+  done
+}
