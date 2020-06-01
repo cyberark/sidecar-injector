@@ -15,12 +15,12 @@ RUN go mod download
 COPY pkg ./pkg
 COPY cmd ./cmd
 
-ARG TAG="dev"
+ARG GIT_COMMIT_SHORT="dev"
 
-# The `Tag` override is there to provide the git commit information in the
-# final binary.
+# The `gitCommitShort` override is there to provide the git commit information in the final
+# binary.
 RUN go build \
-    -ldflags="-X main.Tag=$TAG" \
+    -ldflags="-X github.com/cyberark/sidecar-injector/pkg/version.gitCommitShort=$GIT_COMMIT_SHORT" \
     -o cyberark-sidecar-injector \
     ./cmd/sidecar-injector
 

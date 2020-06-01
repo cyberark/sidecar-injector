@@ -6,7 +6,7 @@ cd "$(dirname "${0}")"
 . ./build_utils
 cd ..
 
-readonly VERSION="$(short_version_tag)"
+readonly VERSION="$(git_version)"
 readonly REGISTRY="cyberark"
 readonly IMAGE_NAME="sidecar-injector"
 readonly LOCAL_IMAGE_WITH_TAG="${IMAGE_NAME}:$(full_version_tag)"

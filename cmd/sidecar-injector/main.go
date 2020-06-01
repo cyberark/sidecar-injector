@@ -11,6 +11,7 @@ import (
 	"syscall"
 
 	"github.com/cyberark/sidecar-injector/pkg/inject"
+	"github.com/cyberark/sidecar-injector/pkg/version"
 )
 
 func main() {
@@ -35,11 +36,11 @@ func main() {
 
 	// Either the flag or the arg should be enough to show the version
 	if *showVersion || flag.Arg(0) == "version" {
-		fmt.Printf("cyberark-sidecar-injector v%s\n", FullVersionName)
+		fmt.Printf("cyberark-sidecar-injector v%s\n", version.Get())
 		return
 	}
 
-	log.Printf("cyberark-sidecar-injector v%s starting up...", FullVersionName)
+	log.Printf("cyberark-sidecar-injector v%s starting up...", version.Get())
 
 	whsvr := &inject.WebhookServer{
 		Params: parameters,
