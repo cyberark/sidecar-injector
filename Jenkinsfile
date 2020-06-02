@@ -59,7 +59,6 @@ pipeline {
     }
 
     stage('Publish Tagged Sidecar Injector Images') {
-      agent { label 'releaser-v2' }
       // Only run this stage when triggered by a tag
       when { tag "v*" }
       steps {
