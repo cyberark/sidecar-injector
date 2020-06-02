@@ -58,12 +58,23 @@ pipeline {
       }
     }
 
-    stage('Publish Tagged Sidecar Injector Images') {
+    stage('Release') {
       // Only run this stage when triggered by a tag
       when { tag "v*" }
-      steps {
-        // The tag trigger sets TAG_NAME as an environment variable
-        sh './bin/publish'
+
+      parallel {
+        stage('Publish Tagged Sidecar Injector Images') {
+          steps {
+            // The tag trigger sets TAG_NAME as an environment variable
+            sh './bin/publish'
+          }
+        }
+        stage('Create draft release') {
+          steps {
+            sh "summon --provider summon-conjur --yaml 'GITHUB_TOKEN: !var github/users/conjur-jenkins/api-token' ./bin/build_release"
+            archiveArtifacts 'dist/goreleaser/'
+          }
+        }
       }
     }
 

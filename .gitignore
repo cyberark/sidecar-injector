@@ -16,3 +16,7 @@ vendor/*
 deployment/mutatingwebhook-ca-bundle.yaml
 deployment/deployment.yaml
 tests/echoserver.yaml
+dist
+
+# IDE files
+.idea
