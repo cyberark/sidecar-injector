@@ -2,8 +2,8 @@
 
 Sidecars are used in Kubernetes to introduce additional features to application pods.
 Manual sidecar injection can be cumbersome and repetitive. **CyberArk Sidecar Injector**
-enables automatic sidecar injection through it being a [mutating admission webhook
-controller](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#mutatingadmissionwebhook).
+enables automatic sidecar injection through it being a
+[mutating admission webhook controller](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#mutatingadmissionwebhook).
 This means when **CyberArk Sidecar Injector** is deployed and enabled in a namespace, any
 pod created in that namespace with the appropriate annotations will result in automated
 sidecar injection.
@@ -25,7 +25,10 @@ Naming and functionality are still subject to *breaking* changes.
 
 ***
 
-This document shows how to deploy and use the CyberArk Sidecar Injector [MutatingAdmissionWebhook](https://kubernetes.io/docs/admin/admission-controllers/#mutatingadmissionwebhook-beta-in-19) Server which injects sidecar container(s) into a pod prior to persistence of the underlying object.
+This document shows how to deploy and use the CyberArk Sidecar Injector
+[mutating admission webhook controller](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#mutatingadmissionwebhook)
+which injects sidecar container(s) into a pod prior to persistence of the underlying
+object.
 
   * [Prerequisites](#prerequisites)
     + [Mandatory TLS](#mandatory-tls)
@@ -51,7 +54,8 @@ This document shows how to deploy and use the CyberArk Sidecar Injector [Mutatin
 
 ## Prerequisites
 
-Kubernetes 1.9.0 or above with the `admissionregistration.k8s.io/v1beta1` API enabled. Verify that by the following command:
+Kubernetes 1.9.0 or above with the `admissionregistration.k8s.io/v1beta1` API enabled.
+Verify that by the following command:
 ```
 ~$ kubectl api-versions | grep admissionregistration.k8s.io/v1beta1
 ```
@@ -60,7 +64,10 @@ The result should be:
 admissionregistration.k8s.io/v1beta1
 ```
 
-In addition, the `MutatingAdmissionWebhook` and `ValidatingAdmissionWebhook` admission controllers should be added and listed in the correct order in the admission-control flag of kube-apiserver. Please see the [Kubernetes documentation]( https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/). It is likely that this is set by default if your cluster is running on GKE.
+In addition, the `MutatingAdmissionWebhook` and `ValidatingAdmissionWebhook` admission
+controllers should be added and listed in the correct order in the admission-control flag
+of kube-apiserver. Please see the [Kubernetes documentation](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/).
+It is likely that this is set by default if your cluster is running on GKE.
 
 If using `minikube`, start your cluster as follows:
 ```bash
@@ -69,7 +76,8 @@ If using `minikube`, start your cluster as follows:
 
 ### Available Sidecars
 
-This section enumerates the available sidecars. The choice of sidecar is made via annotations - see the [Configuration](#configuration) section for details.
+This section enumerates the available sidecars. The choice of sidecar is made via
+annotations - see the [Configuration](#configuration) section for details.
 
 1. [Secretless](#secretless)
 1. [Authenticator](#authenticator)
@@ -86,7 +94,8 @@ Injects:
 See the [README](https://github.com/cyberark/conjur-authn-k8s-client)
 
 Injects:
-  + a newly created shareable **in-memory Volume** named `conjur-access-token` used to store the access token 
+  + a newly created shareable **in-memory Volume** named `conjur-access-token` used to
+  store the access token
   + a configurable **Authenticator container** with:
     + a **Volume Mount** at `/run/conjur` of the `conjur-access-token` Volume
   + a read-only **Volume Mount** at `/run/conjur` of the `conjur-access-token` Volume for
@@ -95,12 +104,20 @@ Injects:
 
 ### Mandatory TLS
 
-Supporting TLS for external webhook server is required because admission is a high security operation. As part of the installation process, we need to create a TLS certificate signed by a trusted CA (shown below is the Kubernetes CA but you can use your own) to secure the communication between the webhook server and kube-apiserver. For the complete steps of creating and approving Certificate Signing Requests(CSR), please refer to [Managing TLS in a cluster](https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/).
+Supporting TLS for external webhook server is required because admission is a high
+security operation. As part of the installation process, we need to create a TLS
+certificate signed by a trusted CA (shown below is the Kubernetes CA but you can use your
+own) to secure the communication between the webhook server and kube-apiserver. For the
+complete steps of creating and approving Certificate Signing Requests(CSR), please refer
+to
+[Managing TLS in a cluster](https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/).
 
 
 ## Docker Image
 
-The docker image for the mutating admission webhook server is publicly available on Dockerhub as [cyberark/sidecar-injector](https://hub.docker.com/r/cyberark/sidecar-injector/).
+The docker image for the mutating admission webhook server is publicly available on
+Dockerhub as
+[cyberark/sidecar-injector](https://hub.docker.com/r/cyberark/sidecar-injector/).
 
 The docker image entrypoint is the server binary. The binary supports the following flags:
 ```bash
@@ -132,7 +149,8 @@ Installation is possible either
 
 #### Dedicated Namespace
 
-Create a namespace `injectors`, where you will deploy the CyberArk Sidecar Injector Webhook components.
+Create a namespace `injectors`, where you will deploy the CyberArk Sidecar Injector
+Webhook components.
 
 1. Create namespace
     ```bash
@@ -141,7 +159,8 @@ Create a namespace `injectors`, where you will deploy the CyberArk Sidecar Injec
 
 #### Deploy Sidecar Injector
 
-1. Create a signed cert/key pair and store it in a Kubernetes `secret` that will be consumed by sidecar injector deployment
+1. Create a signed cert/key pair and store it in a Kubernetes `secret` that will be
+consumed by sidecar injector deployment
     ```bash
     ~$ ./deployment/webhook-create-signed-cert.sh \
         --service cyberark-sidecar-injector \
@@ -149,7 +168,8 @@ Create a namespace `injectors`, where you will deploy the CyberArk Sidecar Injec
         --namespace injectors
     ```
 
-2. Patch the `MutatingWebhookConfiguration` by setting `caBundle` with correct value from Kubernetes cluster
+2. Patch the `MutatingWebhookConfiguration` by setting `caBundle` with correct value from
+Kubernetes cluster
     ```bash
     ~$ cat deployment/mutatingwebhook.yaml | \
         deployment/webhook-patch-ca-bundle.sh \
@@ -211,8 +231,8 @@ helm --namespace injectors \
  ./charts/cyberark-sidecar-injector/
 ```
 
-Optionally, if you want to specify the Secretless and/or Conjur Authenticator Docker image
-references, you can specify this in the `helm install` command:
+Optionally, if you want to specify the Secretless and/or Conjur Authenticator Docker
+image references, you can specify this in the `helm install` command:
 ```
 helm --namespace injectors \
  install \
@@ -233,11 +253,13 @@ Below is example output from the `helm install` command:
 NOTES:
 ## Instructions
 Before you can proceed to use the sidecar-injector, there's one last step.
-You will need to approve the CSR (Certificate Signing Request) made by the sidecar-injector.
+You will need to approve the CSR (Certificate Signing Request) made by the
+sidecar-injector.
 This allows the sidecar-injector to communicate securely with the Kubernetes API.
 
 ### Watch initContainer logs for when CSR is created
-kubectl -n injectors logs deployment/vigilant-numbat-cyberark-sidecar-injector -c init-webhook -f
+kubectl -n injectors logs deployment/vigilant-numbat-cyberark-sidecar-injector -c
+init-webhook -f
 
 ### You can check and inspect the CSR
 kubectl describe csr "vigilant-numbat-cyberark-sidecar-injector.injectors"
@@ -248,26 +270,29 @@ kubectl certificate approve "vigilant-numbat-cyberark-sidecar-injector.injectors
 Now that everything is setup you can enjoy the Cyberark Sidecar Injector.
 This is the general workflow:
 
-1. Annotate your application to enable the injector and to configure the sidecar (see README.md)
+1. Annotate your application to enable the injector and to configure the sidecar (see
+README.md)
 2. Webhook intercepts and injects containers as needed
 
 Enjoy.
 
 ```
 
-Make sure to read the NOTES section once the chart is installed; instructions are provided on how to accept the CSR request. The CSR request **must** be approved.
+Make sure to read the NOTES section once the chart is installed; instructions are provided
+on how to accept the CSR request. The CSR request **must** be approved.
 
 ## Using the Sidecar Injector
 
 ### Configuration
 
 The configurable parameters should be set as annotations on the **Pod template spec** and
-**NOT on the Deployment, Job or otherwise**. The sidecar injector will not inject the
+*NOT on the Deployment, Job or otherwise**. The sidecar injector will not inject the
 sidecar into pods by default. Add the `sidecar-injector.cyberark.com/inject` annotation
 with value `true` to the **Pod template spec** to enable injection. Injection will not go
 ahead if the annotations are not on the **Pod template spec**.
 
-The following table lists the configurable parameters of the Sidecar Injector and their default values.
+The following table lists the configurable parameters of the Sidecar Injector and their
+default values.
 
 | Parameter                     | Description                                     | Default                                                    |
 | -----------------------       | ---------------------------------------------   | ---------------------------------------------------------- |
@@ -287,13 +312,14 @@ There are three options for the value of secretlessConfig:
 	1. configfile#configmapname
 	1. k8s/crd#crdName
 
-Option one is legacy, providing backwards compatibility by only specifying a configmap name.
-The general format is provider#identifier.
+Option one is legacy, providing backwards compatibility by only specifying a configmap
+name. The general format is provider#identifier.
 
 If a config map is referenced, it should contain the following path:
 + secretless.yml - Secretless Configuration File
 
-For help using a CRD to configure secretless, Refer to the [secretless CRD readme](https://github.com/cyberark/secretless-broker/tree/master/resource-definitions).
+For help using a CRD to configure secretless, Refer to the [secretless CRD readme](
+https://github.com/cyberark/secretless-broker/tree/master/resource-definitions).
 
 #### sidecar-injector.cyberark.com/conjurConnConfig
 
@@ -309,11 +335,14 @@ Expected to contain the following paths:
 
 Expected to contain the following path:
 
-+ CONJUR_AUTHN_LOGIN - Host login for pod e.g. namespace/service_account/some_service_account
++ CONJUR_AUTHN_LOGIN - Host login for pod e.g.
+namespace/service_account/some_service_account
 
 ## Secretless Sidecar Injection Example
 
-For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (see below). Later you will label this namespace with `cyberark-sidecar-injector=enabled` so as to allow the cyberark-sidecar-injector to operate on pods created in this namespace.
+For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (see
+below). Later you will label this namespace with `cyberark-sidecar-injector=enabled` so as
+to allow the cyberark-sidecar-injector to operate on pods created in this namespace.
 
 1. Set test namespace environment variable
 
@@ -345,9 +374,12 @@ For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (
 
 4. Create Secretless ConfigMap
 
-    This configuration sets up an `http` service authenticator listening on `0.0.0.0:3000` using the `basic_auth` authentication strategy. The service authenticator is passed the actual values for the user and password using the `literal` secret provider. 
+    This configuration sets up an `http` service authenticator listening on `0.0.0.0:3000`
+    using the `basic_auth` authentication strategy. The service authenticator is passed
+    the actual values for the user and password using the `literal` secret provider.
    
-   As shown below, the username and password are the literal values `my-username` and `secretpassword`, respectively.
+   As shown below, the username and password are the literal values `my-username` and
+   `secretpassword`, respectively.
 
     ```bash
     ~$ cat << EOL | kubectl -n ${TEST_APP_NAMESPACE_NAME} create configmap secretless --from-file=secretless.yml=/dev/stdin
@@ -368,9 +400,11 @@ For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (
 
 5. Deploy an **echo server** app with the Secretless Sidecar:
    
-   The app is an **echo server** listening on port **8080**, which echoes the request header of any requests sent to it. 
+   The app is an **echo server** listening on port **8080**, which echoes the request
+   header of any requests sent to it.
    
-   The **Secretless Sidecar** is injected into the application pod on pod creation via the sidecar injector. The injection is configured via annotations. 
+   The **Secretless Sidecar** is injected into the application pod on pod creation via the
+   sidecar injector. The injection is configured via annotations.
    
    + The `secretless` ConfigMap is used as a source for Secretless configuration.
 
@@ -411,11 +445,16 @@ For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (
 
 7. Test Secretless
 
-    In this step, you test Secretless by `exec`ing into the application pod's main container and issuing an HTTP request against the echo server proxied by Secretless. 
+    In this step, you test Secretless by `exec`ing into the application pod's main
+    container and issuing an HTTP request against the echo server proxied by Secretless.
     
-    The pod spec for the echo server sets the environment variable `http_proxy` within the application to the Secretless `http` service authenticator's address `http://0.0.0.0:3000`. This allows Secretless to inject HTTP Authorization headers when proxying the request, as per the Secretless configuration above.
+    The pod spec for the echo server sets the environment variable `http_proxy` within the
+    application to the Secretless `http` service authenticator's address
+    `http://0.0.0.0:3000`. This allows Secretless to inject HTTP Authorization headers
+    when proxying the request, as per the Secretless configuration above.
     
-    The HTTP Authorization headers are extracted and base64 decoded from the response to retrieve the username and password.
+    The HTTP Authorization headers are extracted and base64 decoded from the response to
+    retrieve the username and password.
 
     ```bash
     ~$ kubectl -n ${TEST_APP_NAMESPACE_NAME} \
@@ -436,13 +475,21 @@ For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (
 
 ## Conjur Authenticator/Secretless Sidecar Injection Example
 
-For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (see below). Later you will label this namespace with `cyberark-sidecar-injector=enabled` so as to allow the cyberark-sidecar-injector to operate on pods created in this namespace.
+For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (see
+below). Later you will label this namespace with `cyberark-sidecar-injector=enabled` so as
+to allow the cyberark-sidecar-injector to operate on pods created in this namespace.
 
-1. Setup a Conjur appliance running with the Kubernetes authenticator installed and enabled - e.g. run `./start` in  [kubernetes-conjur-deploy](https://github.com/cyberark/kubernetes-conjur-deploy/)
+1. Setup a Conjur appliance running with the Kubernetes authenticator installed and
+enabled. e.g. run `./start` in
+[kubernetes-conjur-deploy](https://github.com/cyberark/kubernetes-conjur-deploy/)
 
-1. Load Conjur policy to create a host for the service account `$TEST_APP_SERVICE_ACCOUNT` - e.g. `test-app-secretless` is made available by walking through [kubernetes-conjur-demo](https://github.com/conjurdemos/kubernetes-conjur-demo) up to and including `./3_init_conjur_cert_authority.sh`
+1. Load Conjur policy to create a host for the service account
+`$TEST_APP_SERVICE_ACCOUNT`. e.g. `test-app-secretless` is made available by walking
+through [kubernetes-conjur-demo](https://github.com/conjurdemos/kubernetes-conjur-demo) up
+to and including `./3_init_conjur_cert_authority.sh`
 
-1. Set up environment variables, if not already set from [kubernetes-conjur-demo](https://github.com/conjurdemos/kubernetes-conjur-demo
+1. Set up environment variables, if not already set from
+[kubernetes-conjur-demo](https://github.com/conjurdemos/kubernetes-conjur-demo)
     ```bash
     # REQUIRED values, identical to those used for
     # kubernetes-conjur-deploy and kubernetes-conjur-demo
@@ -508,7 +555,8 @@ For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (
     conjur-sidecar-test             Active    18h       enabled
     ```
 
-1. Create service account (might already exist from `kubernetes-conjur-demo`) to be used by the application pod
+1. Create service account (might already exist from `kubernetes-conjur-demo`) to be used
+by the application pod
     
     This service account maps to the Conjur identity for the pod
 
@@ -519,8 +567,9 @@ For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (
 
 1. Create Conjur ConfigMap
 
-    This ConfigMap named `conjur` stores the connection details to the Conjur appliance.
-    These details are necessary for both the **Authenticator** and **Secretless** sidecars to communicate with the Conjur appliance.
+    This ConfigMap named `conjur` stores the connection details to the Conjur appliance. These
+details are necessary for both the **Authenticator** and **Secretless** sidecars to
+communicate with the Conjur appliance.
     ```bash
     ~$ cat << EOL | kubectl -n ${TEST_APP_NAMESPACE_NAME} apply -f -
     apiVersion: v1
@@ -546,10 +595,13 @@ For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (
 
 1. Deploy an app with the Authenticator Sidecar:
     
-    The **Secretless Sidecar** is injected into the application pod on pod creation via the sidecar injector. The injection is configured via annotations. 
+    The **Secretless Sidecar** is injected into the application pod on pod creation via the
+sidecar injector. The injection is configured via annotations. 
     
     + The `conjur` ConfigMap is used for both Conjur Authentication and Connection configuration
-    + The `sidecar-injector.cyberark.com/containerName` is set to "secretless" because the corresponding Conjur identity to the service account used expects the sidecar container to be named secretless.
+    + The `sidecar-injector.cyberark.com/containerName` is set to "secretless" because the
+corresponding Conjur identity to the service account used expects the sidecar container to
+be named secretless.
 
     ```bash
     ~$ kubectl -n ${TEST_APP_NAMESPACE_NAME} \
@@ -590,9 +642,14 @@ For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (
 
 1. Test Authenticator
 
-    In this step, you test the Authenticator by `exec`ing into the application pod's main container and read the contents of `/run/conjur/access-token`. 
+    In this step, you test the Authenticator by `exec`ing into the application pod's main
+    container and read the contents of `/run/conjur/access-token`.
     
-    The `/run/conjur/access-token` file contains the access token which is injected by the **Authenticator** sidecar upon successful authentication against the Conjur appliance. Note that this file is volume mounted into the application pod's main container as a result of the annotation `sidecar-injector.cyberark.com/conjurTokenReceivers` being set to that container's name.
+    The `/run/conjur/access-token` file contains the access token which is injected by the
+    **Authenticator** sidecar upon successful authentication against the Conjur appliance.
+    Note that this file is volume mounted into the application pod's main container as a
+    result of the annotation `sidecar-injector.cyberark.com/conjurTokenReceivers` being
+    set to that container's name.
 
     ```bash
     ~$ kubectl -n ${TEST_APP_NAMESPACE_NAME} \
@@ -616,7 +673,9 @@ For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (
 
 1. Create Secretless ConfigMap:
 
-   This configuration sets up an `http` service authenticator on `0.0.0.0:3000` using the `basic_auth` authentication strategy that retrieves user and password using the `conjur` secret provider. 
+   This configuration sets up an `http` service authenticator on `0.0.0.0:3000` using the
+   `basic_auth` authentication strategy that retrieves user and password using the
+   `conjur` secret provider.
    
    The username and password are set and stored within the Conjur appliance.
    
@@ -642,11 +701,14 @@ For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (
 
 1. Deploy an **echo server** app with the Secretless Sidecar:
 
-    The app is an **echo server** listening on port **8080**, which echoes the request header of any requests sent to it. 
+    The app is an **echo server** listening on port **8080**, which echoes the request
+    header of any requests sent to it.
     
-    The **Secretless Sidecar** is injected into the application pod on pod creation via the sidecar injector. The injection is configured via annotations. 
+    The **Secretless Sidecar** is injected into the application pod on pod creation via
+    the sidecar injector. The injection is configured via annotations.
     
-    + The `conjur` ConfigMap is used for both Conjur Authentication and Connection configuration
+    + The `conjur` ConfigMap is used for both Conjur Authentication and Connection
+    configuration
     + The `secretless` ConfigMap is used as a source for Secretless configuration.
     ```bash
     ~$ kubectl -n ${TEST_APP_NAMESPACE_NAME} \
@@ -688,11 +750,16 @@ For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (
 
 1. Test Secretless with Conjur
     
-    In this step, you test Secretless by `exec`ing into the application pod's main container and issuing an HTTP request against the echo server proxied by Secretless. 
+    In this step, you test Secretless by `exec`ing into the application pod's main
+    container and issuing an HTTP request against the echo server proxied by Secretless.
     
-    The pod spec for the echo server sets the environment variable `http_proxy` within the application to the Secretless `http` service authenticator's address `http://0.0.0.0:3000`. This allows Secretless to inject HTTP Authorization headers when proxying the request, as per the Secretless configuration above.
+    The pod spec for the echo server sets the environment variable `http_proxy` within the
+    application to the Secretless `http` service authenticator's address
+    `http://0.0.0.0:3000`. This allows Secretless to inject HTTP Authorization headers
+    when proxying the request, as per the Secretless configuration above.
     
-    The HTTP Authorization headers are extracted and base64 decoded from the response to retrieve the username and password.
+    The HTTP Authorization headers are extracted and base64 decoded from the response to
+    retrieve the username and password.
     
     ```bash
     ~$ kubectl -n ${TEST_APP_NAMESPACE_NAME} \
@@ -711,11 +778,13 @@ For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (
 
 ## Contributing
 
-We welcome contributions of all kinds to this repository. For instructions on how to get started and descriptions of our development workflows, please see our [contributing
+We welcome contributions of all kinds to this repository. For instructions on how to get
+started and descriptions of our development workflows, please see our [contributing
 guide][contrib].
 
 [contrib]: https://github.com/cyberark/sidecar-injector/blob/master/CONTRIBUTING.md
 
 ## License
 
-The Sidecar Injector is licensed under Apache License 2.0 - see [`LICENSE`](LICENSE) for more details.
+The Sidecar Injector is licensed under Apache License 2.0 - see [`LICENSE`](LICENSE) for
+more details.
