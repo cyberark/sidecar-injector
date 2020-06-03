@@ -1,0 +1,55 @@
+project_name: cyberark-sidecar-injector
+
+builds:
+- id: cyberark-sidecar-injector-linux
+  main: ./cmd/sidecar-injector
+  env:
+  - CGO_ENABLED=0
+  # Tag 'netgo' is a Go build tag that ensures a pure Go networking stack
+  # in the resulting binary instead of using the default host's stack to
+  # ensure a fully static artifact that has no dependencies.
+  flags:
+  - -tags=netgo
+  goos:
+  - linux
+  goarch:
+  - amd64
+  # The `gitCommitShort` override is there to provide the git commit information in the
+  # final binary.
+  ldflags: -s -w -linkmode external -X github.com/cyberark/sidecar-injector/pkg/version.gitCommitShort={{ .ShortCommit }}" -extldflags "-static"
+  hooks:
+    post:
+      # Copy the binary out into the <dist> path, and give the copy the name we want
+      # in the release <extra_files>.
+      # e.g. Suppose a windows amd64 build generates a binary at
+      # path/to/secretless-broker.exe. This will be copied to
+      # path/to/../secretless-broker-windows_amd64.exe. The copy path can then be added to
+      # the release <extra_files> and will result in a release artifact with the name
+      # secretless-broker-windows_amd64.exe.
+      - cp "{{ .Path }}" "{{ dir .Path }}/../cyberark-sidecar-injector-{{.Target}}{{.Ext}}"
+
+archives:
+  - id: cyberark-sidecar-injector
+    files:
+      - CHANGELOG.md
+      - NOTICES.txt
+      - LICENSE
+    name_template: "{{.ProjectName}}_{{.Version}}_{{.Os}}_{{.Arch}}"
+    wrap_in_directory: true
+
+checksum:
+  name_template: 'SHA256SUMS.txt'
+
+dist: ./dist/goreleaser
+
+snapshot:
+  name_template: "{{ .Tag }}-next"
+
+release:
+  disable: false
+  draft: true
+  extra_files:
+    - glob: NOTICES.txt
+    - glob: LICENSE
+    - glob: dist/goreleaser/CHANGELOG.md
+    - glob: dist/goreleaser/cyberark-sidecar-injector-linux_amd64

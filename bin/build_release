@@ -1,0 +1,22 @@
+#!/bin/bash -e
+
+CURRENT_DIR=$(cd $(dirname "$0"); pwd)
+
+# xgo because it allows cross-compilation
+GORELEASER_IMAGE="cyberark/goreleaser:latest-xgo"
+
+echo "Current dir: $CURRENT_DIR"
+
+# TODO: The image cyberark/goreleaser:latest-xgo will need to be pushed to Dockerhub, and
+#  the command below should become `docker pull cyberark/goreleaser:latest-xgo`
+
+# NOTE: Piping the Dockerfile sends an empty context to docker build
+docker build -t "${GORELEASER_IMAGE}" - < "$CURRENT_DIR/Dockerfile.releaser"
+
+docker run --rm -t \
+  --env GITHUB_TOKEN \
+  --volume "$CURRENT_DIR/..:/work" \
+  --workdir /work \
+  "${GORELEASER_IMAGE}" --rm-dist "$@"
+
+echo "Releases built. Archives can be found in dist/goreleaser"
