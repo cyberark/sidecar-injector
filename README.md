@@ -9,7 +9,7 @@ pod created in that namespace with the appropriate annotations will result in au
 sidecar injection.
 
 **CyberArk Sidecar Injector** provides support for a selection of available sidecars that
-*are configurable through annotations.
+are configurable through annotations.
 
 _Note that unlike manual injection, automatic injection occurs at the pod-level. You will
 not see any change to the deployment itself. Instead you will want to check individual
