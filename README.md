@@ -1,5 +1,20 @@
 # CyberArk Sidecar Injector
 
+Sidecars are used in Kubernetes to introduce additional features to application pods.
+Manual sidecar injection can be cumbersome and repetitive. **CyberArk Sidecar Injector**
+enables automatic sidecar injection through it being a [mutating admission webhook
+controller](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#mutatingadmissionwebhook).
+This means when **CyberArk Sidecar Injector** is deployed and enabled in a namespace, any
+pod created in that namespace with the appropriate annotations will result in automated
+sidecar injection.
+
+**CyberArk Sidecar Injector** provides support for a selection of available sidecars that
+*are configurable through annotations.
+
+_Note that unlike manual injection, automatic injection occurs at the pod-level. You will
+not see any change to the deployment itself. Instead you will want to check individual
+pods (via kubectl describe) to see the injected sidecar._
+
 ***
 
 **Status**: Beta
