@@ -51,5 +51,5 @@ release:
   extra_files:
     - glob: NOTICES.txt
     - glob: LICENSE
-    - glob: dist/goreleaser/CHANGELOG.md
+    - glob: CHANGELOG.md
     - glob: dist/goreleaser/cyberark-sidecar-injector-linux_amd64
