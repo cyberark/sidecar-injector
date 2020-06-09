@@ -20,3 +20,9 @@ dist
 
 # IDE files
 .idea
+
+# Image scan files
+scan_results-sidecar-injector-unfixed.json
+scan_results-sidecar-injector-unfixed.xml
+scan_results-sidecar-injector.json
+scan_results-sidecar-injector.xml
