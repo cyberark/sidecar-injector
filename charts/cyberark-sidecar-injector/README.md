@@ -99,6 +99,7 @@ The following table lists the configurable parameters of the CyberArk Sidecar In
 | `sidecarInjectorImage` | Container image for the sidecar injector. | `cyberark/sidecar-injector:latest` |
 | `secretlessImage` | Container image for the Secretless sidecar. | `cyberark/secretless-broker:latest` |
 | `authenticatorImage` | Container image for the Kubernetes Authenticator sidecar. | `cyberark/conjur-kubernetes-authenticator:latest` |
+| `deploymentApiVersion` | The supported apiVersion for Deployments. This is the value that will be set in the Deployment manifest. It defaults to the supported apiVersion for Deployments on the latest Kubernetes release. | `apps/v1` |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 
@@ -155,3 +156,26 @@ kubectl -n kube-system \
 ### authenticatorImage
 
 `authenticatorImage` is the container image for the Kubernetes Authenticator sidecar.
+
+### deploymentApiVersion
+
+`deploymentApiVersion` is the supported apiVersion for Deployments. This is the value that
+will be set in the Deployment manifest.
+
+`deploymentApiVersion` defaults to the supported apiVersion for Deployments on the latest
+Kubernetes release.
+
+If you're on an older version of Kubernetes, you can retrieve the supported apiVersion
+for Deployments by running the shell commands below. Update deploymentApiVersion to the
+returned.
+
+```bash
+deploymentApiGroup=$(kubectl api-resources | \
+ grep "deployments.*deploy.*Deployment" | awk '{print $3}')
+
+deploymentApiVersion=$(kubectl api-versions | grep "${deploymentApiGroup}/")
+
+echo ${deploymentApiVersion}
+```
+
+#

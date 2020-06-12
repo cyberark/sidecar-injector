@@ -20,3 +20,22 @@ authenticatorImage: cyberark/conjur-kubernetes-authenticator:latest
 
 sidecarInjectorImage: cyberark/sidecar-injector:latest
 SECRETLESS_CRD_SUFFIX: ""
+
+# deploymentApiVersion is the supported apiVersion for Deployments. This is the value that
+# will be set in the Deployment manifest.
+#
+# deploymentApiVersion defaults to the supported apiVersion for Deployments on the latest
+# Kubernetes release.
+#
+# If you're on an older version of Kubernetes, you can retrieve the supported apiVersion
+# for Deployments by running the shell commands below. Update deploymentApiVersion to the
+# returned.
+#
+# deploymentApiGroup=$(kubectl api-resources | \
+# grep "deployments.*deploy.*Deployment" | awk '{print $3}')
+#
+# deploymentApiVersion=$(kubectl api-versions | grep "${deploymentApiGroup}/")
+#
+# echo ${deploymentApiVersion}
+#
+deploymentApiVersion: apps/v1
