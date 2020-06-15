@@ -182,6 +182,7 @@ Kubernetes cluster
 3. Generate sidecar injector deployment manifest
     ```bash
     ~$ ./deployment/deployment.yaml.sh \
+         --deployment-api-version apps/v1 \
          --sidecar-injector-image cyberark/sidecar-injector:latest \
          --secretless-image cyberark/secretless-broker:latest \
          --authenticator-image cyberark/conjur-kubernetes-authenticator:latest \
@@ -223,6 +224,7 @@ To install the sidecar injector in the `injectors` namespace run the following:
 ```
 helm --namespace injectors \
  install \
+ --set "deploymentApiVersion=apps/v1" \
  --set "caBundle=$(kubectl -n kube-system \
    get configmap \
    extension-apiserver-authentication \
@@ -236,13 +238,14 @@ image references, you can specify this in the `helm install` command:
 ```
 helm --namespace injectors \
  install \
+ --set "deploymentApiVersion=apps/v1" \
  --set "caBundle=$(kubectl -n kube-system \
     get configmap \
     extension-apiserver-authentication \
     -o=jsonpath='{.data.client-ca-file}' \
   )" \
- --set secretless-image=path/to/secretless/container/image/repo/and/tag" \
- --set authenticator-image=path/to/authenticator/container/image/repo/and/tag" \
+ --set secretlessImage=path/to/secretless/container/image/repo/and/tag" \
+ --set authenticatorImage=path/to/authenticator/container/image/repo/and/tag" \
  ./charts/cyberark-sidecar-injector/
 ```
 
