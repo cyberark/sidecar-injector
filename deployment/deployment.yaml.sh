@@ -3,7 +3,6 @@
 set -e
 
 defaultSidecarInjectorImage="cyberark/sidecar-injector:latest"
-defaultDeploymentApiVersion="apps/v1"
 
 usage() {
     cat <<EOF
@@ -20,20 +19,6 @@ The following flags are available to configure the sidecar-injector deployment. 
 
        --authenticator-image       Container image for the Kubernetes Authenticator sidecar.
 
-       --deployment-api-version    The supported apiVersion for Deployments. This is the
-                                   value that will be set in the Deployment manifest. It
-                                   defaults to the supported apiVersion for Deployments on
-                                   the latest Kubernetes release.
-
-                                   (default: ${defaultDeploymentAPIVersion})
-
-                                   If you're on an older version of Kubernetes, you can
-                                   retrieve the supported apiVersion for Deployments by
-                                   running the shell commands below.
-
-                                   deploymentApiGroup=\$(kubectl api-resources | grep "deployments.*deploy.*Deployment" | awk '{print \$3}')
-                                   deploymentApiVersion=\$(kubectl api-versions | grep "\${deploymentApiGroup}/")
-                                   echo "\${deploymentApiVersion}"
 EOF
     exit 1
 }
@@ -45,16 +30,17 @@ usage_if_empty() {
   fi
 }
 
+# latest_supported_api_version returns the latest supported api version of a Kubernetes resource
+function latest_supported_api_version() {
+  local apiGroup
+  apiGroup=$(kubectl api-resources | grep "${1}" | head -1 | awk '{print $3}')
+  kubectl api-versions | grep "${apiGroup}" | cat
+}
+
 sidecarInjectorImage="${defaultSidecarInjectorImage}"
-deploymentApiVersion="${defaultDeploymentAPIVersion}"
 
 while [[ $# -gt 0 ]]; do
     case ${1} in
-        --deployment-api-version)
-            usage_if_empty "$2"
-            deploymentApiVersion="$2"
-            shift
-            ;;
         --sidecar-injector-image)
             usage_if_empty "$2"
             sidecarInjectorImage="$2"
@@ -78,7 +64,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 cat << EOL
-apiVersion: ${deploymentApiVersion}
+apiVersion: $(latest_supported_api_version Deployment)
 kind: Deployment
 metadata:
   name: cyberark-sidecar-injector
