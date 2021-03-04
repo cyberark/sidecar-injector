@@ -25,6 +25,13 @@ EOF
     exit 1
 }
 
+# latest_supported_api_version returns the latest supported api version of a Kubernetes resource
+function latest_supported_api_version() {
+  local apiGroup
+  apiGroup=$(kubectl api-resources | grep "${1}" | head -1 | awk '{print $3}')
+  kubectl api-versions | grep "${apiGroup}" | cat
+}
+
 while [[ $# -gt 0 ]]; do
     case ${1} in
         --service)
@@ -80,11 +87,11 @@ openssl genrsa -out ${tmpdir}/server-key.pem 2048
 openssl req -new -key ${tmpdir}/server-key.pem -subj "/CN=${service}.${namespace}.svc" -out ${tmpdir}/server.csr -config ${tmpdir}/csr.conf
 
 # clean-up any previously created CSR for our service. Ignore errors if not present.
-kubectl delete csr ${csrName} 2>/dev/null || true
+kubectl delete csr "${csrName}" 2>/dev/null || true
 
 # create  server cert/key CSR and  send to k8s API
 cat <<EOF | kubectl create -f -
-apiVersion: certificates.k8s.io/v1beta1
+apiVersion: $(latest_supported_api_version CertificateSigningRequest)
 kind: CertificateSigningRequest
 metadata:
   name: ${csrName}
