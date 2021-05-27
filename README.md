@@ -322,7 +322,7 @@ If a config map is referenced, it should contain the following path:
 + secretless.yml - Secretless Configuration File
 
 For help using a CRD to configure secretless, Refer to the [secretless CRD readme](
-https://github.com/cyberark/secretless-broker/tree/master/resource-definitions).
+https://github.com/cyberark/secretless-broker/tree/main/resource-definitions).
 
 #### sidecar-injector.cyberark.com/conjurConnConfig
 
@@ -785,7 +785,7 @@ We welcome contributions of all kinds to this repository. For instructions on ho
 started and descriptions of our development workflows, please see our [contributing
 guide][contrib].
 
-[contrib]: https://github.com/cyberark/sidecar-injector/blob/master/CONTRIBUTING.md
+[contrib]: https://github.com/cyberark/sidecar-injector/blob/main/CONTRIBUTING.md
 
 ## License
 

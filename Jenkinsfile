@@ -50,7 +50,7 @@ pipeline {
 
     stage('Publish Edge Sidecar Injector Images') {
       when {
-        branch 'master'
+        branch 'main'
       }
 
       steps {

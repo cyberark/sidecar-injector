@@ -1,9 +1,9 @@
 name: Unit Tests
 on:
-  # Only run this on pushes to master
+  # Only run this on pushes to 
   push:
     branches:
-      - master
+      - main
 
   # And when PRs operations are done
   pull_request:
