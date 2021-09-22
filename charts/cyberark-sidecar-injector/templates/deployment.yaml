@@ -25,7 +25,6 @@ spec:
       initContainers:
         - name: init-webhook
           image: {{ .Values.sidecarInjectorImage }}
-          restartPolicy: Never
           command:
             - /bin/sh
             - -c

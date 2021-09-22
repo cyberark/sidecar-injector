@@ -217,7 +217,7 @@ Kubernetes cluster
 
 ### Installing the Sidecar Injector (Helm)
 
-+ [Helm v2](https://v2.helm.sh/docs/) is **required**
++ [Helm v3](https://helm.sh/docs/) is **required**
 
 To install the sidecar injector in the `injectors` namespace run the following:
 

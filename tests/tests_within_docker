@@ -31,7 +31,7 @@ function cleanup() {
     gcloud container images delete --force-delete-tags -q  "${SIDECAR_IMAGE}" ||:
 
     # Delete sci helm deployment
-    helm delete --purge "${HELM_DEPLOYMENT}" ||:
+    helm uninstall "${HELM_DEPLOYMENT}" ||:
 
     # Delete k8s resources namespace
     kubectl delete --wait=true --ignore-not-found=true namespace "${TEST_NAMESPACE}"
@@ -173,7 +173,7 @@ function deploy_injector() {
 
     echo ">>--- Ensure sidecar-injector namespace is clean"
     if helm list --all |grep -q "${HELM_DEPLOYMENT}"; then
-        helm delete --purge "${HELM_DEPLOYMENT}"
+        helm uninstall "${HELM_DEPLOYMENT}"
     fi
 
     kubectl delete namespace "${I_NAMESPACE}" --ignore-not-found=true
@@ -183,7 +183,6 @@ function deploy_injector() {
     echo ">>--- Deploy sidecar injection helm chart"
     helm \
         --namespace "${I_NAMESPACE}" \
-        --name "${HELM_DEPLOYMENT}" \
         --set "deploymentApiVersion=apps/v1" \
         --set "SECRETLESS_CRD_SUFFIX=${SECRETLESS_CRD_SUFFIX}" \
         --set "sidecarInjectorImage=${SIDECAR_IMAGE}" \
@@ -194,6 +193,7 @@ function deploy_injector() {
                 -o=jsonpath='{.data.client-ca-file}'
         )" \
         install \
+        "${HELM_DEPLOYMENT}" \
         charts/cyberark-sidecar-injector
     popd
 
