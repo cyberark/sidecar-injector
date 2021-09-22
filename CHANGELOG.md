@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+- Dropped support for Helm V2 and converted to Helm V3.
+  [#60](https://github.com/cyberark/sidecar-injector/pull/60)
+
 ## [0.1.1] - 2020-06-17
 
 ### Added

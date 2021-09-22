@@ -1,12 +1,14 @@
 FROM google/cloud-sdk:latest
 
-ARG HELM_VERSION=v2.10.0
+ARG HELM_VERSION
 
 RUN mkdir -p /src
 WORKDIR /src
 
-# Install Helm
-RUN curl -L https://git.io/get_helm.sh | bash -s -- -v ${HELM_VERSION}
+# Install Helm client
+RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+RUN chmod 700 get_helm.sh
+RUN ./get_helm.sh --no-sudo --version ${HELM_VERSION:-v3.7.0}
 
 # Install Docker client
 RUN apt-get update -y && \

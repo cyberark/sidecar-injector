@@ -15,7 +15,7 @@ CyberArk Sidecar Injector is a [MutatingAdmissionWebhook](https://kubernetes.io/
 ## TL;DR;
 
 ```bash
-$ helm install -f values.yaml .
+$ helm install -f values.yaml my-release .
 ```
 
 ## Introduction
@@ -35,13 +35,14 @@ Supporting TLS for external webhook server is required because admission is a hi
 To install the chart with the release name `my-release`, follow the instructions in the NOTES section on how to approve the CSR:
 
 ```bash
-$ helm install --name my-release \
+$ helm install \
   --set caBundle="$(kubectl -n kube-system \
     get configmap \
     extension-apiserver-authentication \
     -o=jsonpath='{.data.client-ca-file}' \
   )" \
- .
+  my-release \
+  .
 ```
 
 ```
@@ -104,10 +105,11 @@ The following table lists the configurable parameters of the CyberArk Sidecar In
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 
 ```bash
-$ helm install --name my-release \
+$ helm install \
    --set csrEnabled="false" \
    --set certsSecret="some-secret" \
    --set caBundle="-----BEGIN CERTIFICATE-----..." \
+   my-release \
    .
 ```
 
@@ -116,7 +118,7 @@ The above command creates a sidecar injector deployment, retrieves the private k
 Alternatively, a YAML file that specifies the values for the parameters can be provided while installing the chart. For example,
 
 ```bash
-$ helm install --name my-release -f values.yaml .
+$ helm install -f values.yaml my-release .
 ```
 
 ### certsSecret
