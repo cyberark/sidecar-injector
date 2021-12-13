@@ -9,5 +9,6 @@ const (
 	annotationInjectKey               = "sidecar-injector.cyberark.com/inject"
 	annotationInjectTypeKey           = "sidecar-injector.cyberark.com/injectType"
 	annotationSecretlessConfigKey     = "sidecar-injector.cyberark.com/secretlessConfig"
+	annotationSecretlessCRDSuffixKey  = "sidecar-injector.cyberark.com/secretlessCRDSuffix"
 	annotationStatusKey               = "sidecar-injector.cyberark.com/status"
 )

@@ -6,13 +6,13 @@ You will need to approve the CSR (Certificate Signing Request) made by the sidec
 This allows the sidecar-injector to communicate securely with the Kubernetes API.
 
 ### Watch initContainer logs for when CSR is created
-kubectl -n {{ .Release.Namespace }} logs deployment/{{ include "cyberark-sidecar-injector.fullname" . }} -c init-webhook -f
+kubectl -n {{ .Release.Namespace }} logs deployment/{{ include "cyberark-sidecar-injector.name" . }} -c init-webhook -f
 
 ### You can check and inspect the CSR
-kubectl describe csr "{{ include "cyberark-sidecar-injector.fullname" . }}.{{ .Release.Namespace }}"
+kubectl describe csr "{{ include "cyberark-sidecar-injector.name" . }}.{{ .Release.Namespace }}"
 
 ### Approve the CSR
-kubectl certificate approve "{{ include "cyberark-sidecar-injector.fullname" . }}.{{ .Release.Namespace }}"
+kubectl certificate approve "{{ include "cyberark-sidecar-injector.name" . }}.{{ .Release.Namespace }}"
 {{- end }}
 
 Now that everything is setup you can enjoy the Cyberark Sidecar Injector.

@@ -26,17 +26,17 @@ func mutationRequired(ignoredList []string, metadata *metav1.ObjectMeta) bool {
 		if metadata.Namespace == namespace {
 			log.Printf(
 				"Skip mutation for %v for it' in special namespace:%v",
-				metadata.Name,
+				metaName(metadata),
 				metadata.Namespace,
 			)
 			return false
 		}
 	}
 
-	status, _ := getAnnotation(metadata, annotationStatusKey)
+	injectedStatus, _ := getAnnotation(metadata, annotationStatusKey)
 
 	// determine whether to perform mutation based on annotation for the target resource
-	required := strings.ToLower(status) != "injected"
+	required := strings.ToLower(injectedStatus) != "injected"
 	if required {
 		injectValue, _ := getAnnotation(metadata, annotationInjectKey)
 		switch strings.ToLower(injectValue) {
@@ -48,10 +48,10 @@ func mutationRequired(ignoredList []string, metadata *metav1.ObjectMeta) bool {
 	}
 
 	log.Printf(
-		"Mutation policy for %v/%v: status: %q required:%v",
-		metadata.Namespace,
+		"Mutation policy for %s/%s: injected status: %q required:%v",
+		metaName(metadata),
 		metadata.Name,
-		status,
+		injectedStatus,
 		required,
 	)
 

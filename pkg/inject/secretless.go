@@ -2,7 +2,6 @@ package inject
 
 import (
 	"fmt"
-	"os"
 	"sort"
 	"strings"
 
@@ -11,6 +10,7 @@ import (
 
 type SecretlessSidecarConfig struct {
 	secretlessConfig              string
+	secretlessCRDSuffix           string
 	conjurConnConfigMapName       string
 	conjurAuthConfigMapName       string
 	serviceAccountTokenVolumeName string
@@ -32,12 +32,12 @@ func generateSecretlessSidecarConfig(cfg SecretlessSidecarConfig) *PatchConfig {
 		),
 	}
 
-	if crdSuffix, ok := os.LookupEnv("SECRETLESS_CRD_SUFFIX"); ok && crdSuffix != "" {
+	if cfg.secretlessCRDSuffix != "" {
 		envvars = append(
 			envvars,
 			envVarFromLiteral(
 				"SECRETLESS_CRD_SUFFIX",
-				crdSuffix,
+				cfg.secretlessCRDSuffix,
 			),
 		)
 	}
@@ -156,9 +156,9 @@ func generateSecretlessSidecarConfig(cfg SecretlessSidecarConfig) *PatchConfig {
 
 	containers := []corev1.Container{
 		{
-			Name:            "secretless",
-			Image:           cfg.sidecarImage,
-			Args:            []string{
+			Name:  "secretless",
+			Image: cfg.sidecarImage,
+			Args: []string{
 				"-config-mgr",
 				fmt.Sprintf("%s#%s", configMgr, configSpec),
 			},

@@ -1,0 +1,64 @@
+#!/bin/bash
+
+# Run tests for cyberark sidecar-injector in a local Kubernetes-in-Docker
+# (KinD) environment. This test script assumes that a local KinD cluster
+# is up and running, and that the following client binaries are installed
+# locally:
+#    - kubectl
+#    - kubens
+#    - helm
+#
+# These tests currently exercise the secrectless broker sidecar.
+
+set -euo pipefail
+cd "$(dirname "$0")"
+
+. tests/utils
+
+# Set environment variables
+UNIQUE_TEST_ID="$(uuidgen | tr "[:upper:]" "[:lower:]" | head -c 6 | tr -d -)"
+export UNIQUE_TEST_ID
+export SECRETLESS_CRD_SUFFIX="${UNIQUE_TEST_ID}"
+export SIDECAR_IMAGE="sidecar-injector:latest"
+export TEST_NAMESPACE="sci-${UNIQUE_TEST_ID}"
+
+function testInjection() {
+    set -x
+
+    # Load the local sidecar-injector image to the local KinD cluster node(s).
+    # (Note that for this to work, Kubernetes Deployments must use an
+    # imagePullPolicy of 'Never' for this image so that Kubernetes never tries
+    # to pull images from the Docker registry, and instead always uses images
+    # from each node's local image cache.)
+    kind load docker-image "${SIDECAR_IMAGE}"
+
+    export SECRETLESS_CRD_SUFFIX="${UNIQUE_TEST_ID}";
+
+    # create test namespace
+    kubectl create namespace "${TEST_NAMESPACE}"
+
+    # switch to test namespace
+    kubectl config set-context --current --namespace="${TEST_NAMESPACE}"
+
+    # run CRD tests
+    cd tests;
+    export K8S_PLATFORM="kind"
+    # TODO: Rename this script since it isn't always run inside a Docker
+    # container (e.g. it's being run on the local host here).
+    ./tests_within_docker
+}
+
+function main() {
+    announce 'Build Sidecar Injector Image'
+    ./bin/build latest
+
+    docker inspect sidecar-injector:latest >/dev/null 2>&1 || {
+        echo "ERROR: sidecar-injector:latest must exist locally for test to run."
+        exit 1
+    }
+
+    announce 'Test Sidecar Injection with Secretless configured via CRD'
+    testInjection
+}
+
+main

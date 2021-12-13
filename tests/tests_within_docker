@@ -25,27 +25,38 @@ HELM_DEPLOYMENT="sci-${UNIQUE_TEST_ID}"
 
 # Clean up when script completes
 function cleanup() {
-    announce 'Wrapping up and removing test environment'
+    announce 'Cleaning up test environment'
 
     # Delete image from GCR
-    gcloud container images delete --force-delete-tags -q  "${SIDECAR_IMAGE}" ||:
+    if [[ "$K8S_PLATFORM" == "gke" ]]; then
+        gcloud container images delete --force-delete-tags -q  "${SIDECAR_IMAGE}" ||:
+    fi
 
     # Delete sci helm deployment
-    helm uninstall "${HELM_DEPLOYMENT}" ||:
+    if helm list --all --namespace "${I_NAMESPACE}" | grep -q "${HELM_DEPLOYMENT}"; then
+        helm uninstall --namespace "${I_NAMESPACE}" "${HELM_DEPLOYMENT}"
+    fi
 
-    # Delete k8s resources namespace
-    kubectl delete --wait=true --ignore-not-found=true namespace "${TEST_NAMESPACE}"
-    kubectl delete --wait=true --ignore-not-found=true namespace "i-${TEST_NAMESPACE}"
-    kubectl delete --wait=true --ignore-not-found=true crd "configurations.secretless${SECRETLESS_CRD_SUFFIX}.io" &
+    # Delete k8s test namespaces
+    kubectl delete namespace "${TEST_NAMESPACE}" \
+        --wait=true --ignore-not-found=true
+    kubectl delete namespace "i-${TEST_NAMESPACE}" \
+        --wait=true --ignore-not-found=true
 
-    kubectl delete --wait=true --ignore-not-found=true service secretless-broker secretless-broker-external &
-
-    kubectl delete --wait=true --ignore-not-found=true clusterrole "secretless-crd-${SECRETLESS_CRD_SUFFIX}" &
-    kubectl delete --wait=true --ignore-not-found=true clusterrolebinding "secretless-crd-${SECRETLESS_CRD_SUFFIX}" &
-    kubectl delete --wait=true --ignore-not-found=true serviceaccount "secretless-crd-${SECRETLESS_CRD_SUFFIX}" &
-
-    kubectl delete --wait=true --ignore-not-found=true deployment sb-sci-echoserver &
-    kubectl delete --wait=true --ignore-not-found=true pods -l app=sb-sci-echoserver &
+    # Make sure k8s cluster-scoped resources are cleaned up
+    kubectl delete crd "configurations.secretless${SECRETLESS_CRD_SUFFIX}.io" \
+        --wait=true --ignore-not-found=true &
+    kubectl delete mutatingwebhookconfiguration \
+        cyberark-sidecar-injector.i-"${TEST_NAMESPACE}" \
+        --wait=true --ignore-not-found=true &
+    kubectl delete clusterrole "cyberark-sidecar-injector.${I_NAMESPACE}" \
+        --wait=true --ignore-not-found=true &
+    kubectl delete clusterrolebinding "cyberark-sidecar-injector.${I_NAMESPACE}" \
+        --wait=true --ignore-not-found=true &
+    kubectl delete clusterrole "secretless-crd-${SECRETLESS_CRD_SUFFIX}" \
+        --wait=true --ignore-not-found=true &
+    kubectl delete clusterrolebinding "secretless-crd-${SECRETLESS_CRD_SUFFIX}" \
+        --wait=true --ignore-not-found=true &
     wait
 }
 
@@ -63,14 +74,54 @@ exit_trap() {
 trap exit_trap HUP INT QUIT TERM EXIT ERR
 
 exit_err() {
-    echo "Exiting with error: ${*}"
+    announce "Exiting with error: ${*}!!!!"
+    echo -e "\n\n*** Showing all MutatingWebhookConfigurations ***"
+    kubectl get mutatingwebhookconfigurations
+    echo -e "\n\n*** All objects in ${I_NAMESPACE} Namespace ***"
+    kubectl get -n "${I_NAMESPACE}" all
+    echo -e "\n\n*** Showing all Pods in ${I_NAMESPACE} Namespace ***"
+    kubectl get -n "${I_NAMESPACE}" pods -o yaml
+    echo -e "\n\n*** Showing log for sidecar injector Pods ${I_NAMESPACE} Namespace ***"
+    pod="$(kubectl get pods -n ${I_NAMESPACE} -o name)"
+    kubectl logs -n "${I_NAMESPACE}" "$pod"
+    echo -e "\n\n*** All objects in ${TEST_NAMESPACE} Namespace ***"
+    kubectl get -n "${TEST_NAMESPACE}" all
+    echo -e "\n\n*** Showing echo-server deployment ***"
+    show_echoserver_deployment
+    echo -e "\n\n*** Showing all Pods in ${TEST_NAMESPACE} Namespace ***"
+    show_all_pods
+    echo -e "\n\n*** Showing echo-server Pod ***"
+    show_echoserver_pod
+    echo -e "\n\n*** echoserver.yaml ***"
+    cat echoserver.yaml
     echo -e "\n\n*** Secretless container logs ***"
     kubectl -n "${TEST_NAMESPACE}" logs "$(echoserver_pod_name)" -c secretless
     echo -e "\n\n*** echo-server container logs ***"
     kubectl -n "${TEST_NAMESPACE}" logs "$(echoserver_pod_name)" -c echo-server
-    echo -e "\n\n*** echoserver.yaml ***"
-    cat echoserver.yaml
     exit 1
+}
+
+function show_echoserver_deployment() {
+    kubectl get deployments \
+        -n "${TEST_NAMESPACE}" \
+        sb-sci-echoserver \
+        -o yaml \
+        2>${log}
+}
+
+function show_all_pods() {
+    kubectl get pods \
+        -n "${TEST_NAMESPACE}" \
+        -o yaml \
+        2>${log}
+}
+
+function show_echoserver_pod() {
+    kubectl get pods \
+        -n "${TEST_NAMESPACE}" \
+        -l app=sb-sci-echoserver \
+        -o yaml \
+        2>${log}
 }
 
 function echoserver_pod_name() {
@@ -153,7 +204,7 @@ function deploy_echoserver() {
     echo ">>--- Labeling Namespace for Sidecar Injection"
     kubectl label \
         namespace "${TEST_NAMESPACE}" \
-        cyberark-sidecar-injector=enabled
+        "cyberark-sidecar-injector-${I_NAMESPACE}=enabled"
 
     ./echoserver.yaml.sh >echoserver.yaml 2>${log} || exit_err "Failed to template echoserver.yaml"
     kubectl -n "${TEST_NAMESPACE}" \
@@ -166,14 +217,14 @@ function deploy_echoserver() {
 
 function deploy_injector() {
     # /src --> cyberark/sidecar-injector
-    pushd /src/
+    pushd ../
 
     I_NAMESPACE="i-${TEST_NAMESPACE}"
-    cert="${HELM_DEPLOYMENT}-cyberark-sidecar-injector.${I_NAMESPACE}"
+    cert="cyberark-sidecar-injector.${I_NAMESPACE}"
 
     echo ">>--- Ensure sidecar-injector namespace is clean"
-    if helm list --all |grep -q "${HELM_DEPLOYMENT}"; then
-        helm uninstall "${HELM_DEPLOYMENT}"
+    if helm list --all --namespace "${I_NAMESPACE}" | grep -q "${HELM_DEPLOYMENT}"; then
+        helm uninstall --namespace "${I_NAMESPACE}" "${HELM_DEPLOYMENT}"
     fi
 
     kubectl delete namespace "${I_NAMESPACE}" --ignore-not-found=true
@@ -181,37 +232,45 @@ function deploy_injector() {
     kubectl create namespace "${I_NAMESPACE}"
 
     echo ">>--- Deploy sidecar injection helm chart"
-    helm \
+
+    helm install "${HELM_DEPLOYMENT}" charts/cyberark-sidecar-injector \
         --namespace "${I_NAMESPACE}" \
+        --set "namespaceSelectorLabel=cyberark-sidecar-injector-${I_NAMESPACE}" \
         --set "deploymentApiVersion=apps/v1" \
         --set "SECRETLESS_CRD_SUFFIX=${SECRETLESS_CRD_SUFFIX}" \
         --set "sidecarInjectorImage=${SIDECAR_IMAGE}" \
+        --set "sidecarInjectorImagePullPolicy=${INJECTOR_IMAGE_PULL_POLICY}" \
         --set "caBundle=$(
             kubectl -n kube-system \
                 get configmap \
                 extension-apiserver-authentication \
                 -o=jsonpath='{.data.client-ca-file}'
-        )" \
-        install \
-        "${HELM_DEPLOYMENT}" \
-        charts/cyberark-sidecar-injector
+        )"
     popd
 
+    announce "Waiting for CSR and approving it"
     echo ">>--- Wait for CSR to be created"
+    csr_found=false
     for _ in {1..30}; do
         # the yaml output doesn't include the condition field so -o jsonpath doesn't work here
         kubectl \
-            -n "${I_NAMESPACE}" \
             get "csr/${cert}" \
             |grep Pending \
+            && csr_found=true \
             && break
         sleep 1
     done
 
+    if [ "$csr_found" = false ]; then
+        # Display CSR for troubleshooting
+        echo ">>--- Pending CSR not found. Displaying init container log."
+        pod=$(get_first_pod_for_app cyberark-sidecar-injector "${I_NAMESPACE}")
+        kubectl logs -n "${I_NAMESPACE}" "${pod}" -c init-webhook
+        exit 1
+    fi
+
     echo ">>--- Found CSR, aproving"
-    kubectl \
-        -n "${I_NAMESPACE}" \
-        certificate approve "${cert}"
+    kubectl certificate approve "${cert}"
 
     echo ">>--- Waiting for Sidecar Injector pod to initialise"
     pod=$(get_first_pod_for_app cyberark-sidecar-injector "${I_NAMESPACE}")
@@ -228,12 +287,21 @@ function deploy_injector() {
 function main() {
     echo "using SECRETLESS_CRD_SUFFIX=${SECRETLESS_CRD_SUFFIX}"
     echo "UTID: ${UNIQUE_TEST_ID}"
+    export K8S_PLATFORM="${K8S_PLATFORM:-gke}"
+
+    if [[ "$K8S_PLATFORM" == "kind" ]]; then
+        INJECTOR_IMAGE_PULL_POLICY="Never"
+    else
+        INJECTOR_IMAGE_PULL_POLICY="Always"
+    fi
+    export INJECTOR_IMAGE_PULL_POLICY
 
     # deploy injector
     # This creates deploys a sidecar injector pod. This listens for deployment
     # creations and modifies them in flight to add a secretless-broker container,
     # if the appropriate annotations are found.
     announce "Deploying Sidecar Injector"
+    pwd
     deploy_injector
 
     # deploy secretless deps and test app (echo server)
