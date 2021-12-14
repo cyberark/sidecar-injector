@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Dropped support for Helm V2 and converted to Helm V3.
   [#60](https://github.com/cyberark/sidecar-injector/pull/60)
 
+### Security
+- Updated golang.org/x/net to v0.0.0-20211209124913-491a49abca63
+  [cyberark/sidecar-injector#63](https://github.com/cyberark/sidecar-injector/pull/63)
+
+
 ## [0.1.1] - 2020-06-17
 
 ### Added
