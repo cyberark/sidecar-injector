@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 - Dropped support for Helm V2 and converted to Helm V3.
   [#60](https://github.com/cyberark/sidecar-injector/pull/60)
+- K8s APIs used for mutating webhook request/response messages are upgraded
+  from the deprecated 'v1beta1' versions to 'v1' so that the Sidecar Injector
+  works on Kubernetes v1.22 or newer and OpenShift v4.9 or newer.
+  [#62](https://github.com/cyberark/sidecar-injector/pull/62)
 
 ## [0.1.1] - 2020-06-17
 

@@ -2,7 +2,7 @@
 apiVersion: {{ .Values.deploymentApiVersion }}
 kind: Deployment
 metadata:
-  name: {{ include "cyberark-sidecar-injector.fullname" . }}
+  name: {{ include "cyberark-sidecar-injector.name" . }}
   labels:
     app: {{ include "cyberark-sidecar-injector.name" . }}
     chart: {{ include "cyberark-sidecar-injector.chart" . }}
@@ -20,11 +20,12 @@ spec:
         app: {{ include "cyberark-sidecar-injector.name" . }}
         release: {{ .Release.Name }}
     spec:
-      serviceAccountName: {{ include "cyberark-sidecar-injector.fullname" . }}
+      serviceAccountName: {{ include "cyberark-sidecar-injector.name" . }}
 {{- if .Values.csrEnabled }}
       initContainers:
         - name: init-webhook
           image: {{ .Values.sidecarInjectorImage }}
+          imagePullPolicy: {{ .Values.sidecarInjectorImagePullPolicy }}
           command:
             - /bin/sh
             - -c
@@ -32,8 +33,8 @@ spec:
             - |
               set -e
 
-              secret={{ include "cyberark-sidecar-injector.fullname" . | quote }}
-              service={{ include "cyberark-sidecar-injector.fullname" . | quote }}
+              secret={{ include "cyberark-sidecar-injector.name" . | quote }}
+              service={{ include "cyberark-sidecar-injector.name" . | quote }}
               namespace={{ .Release.Namespace | quote }}
 
               csrName=${service}.${namespace}
@@ -57,14 +58,24 @@ spec:
               EOF
 
               openssl genrsa -out ${tmpdir}/server-key.pem 2048
-              openssl req -new -key ${tmpdir}/server-key.pem -subj "/CN=${service}.${namespace}.svc" -out ${tmpdir}/server.csr -config ${tmpdir}/csr.conf
+              openssl req -new -key ${tmpdir}/server-key.pem -subj "/CN=system:node:${service}.${namespace}.svc/O=system:nodes" -out ${tmpdir}/server.csr -config ${tmpdir}/csr.conf
 
-              # clean-up any previously created CSR for our service. Ignore errors if not present.
-              kubectl delete csr ${csrName} --wait=true 2>/dev/null || true
+              echo "Cleaning up any previously created CSR for sidecar injector"
+              kubectl delete csr "${csrName}" --wait=true --ignore-not-found=true
 
-              # create  server cert/key CSR and  send to k8s API
+              echo "Checking available Kubernetes API versions."
+              kubectl version
+              kubectl api-versions | grep certificates.k8s.io
+              kubectl api-versions | grep rbac.authorization.k8s.io
+              kubectl api-versions | grep admissionregistration.k8s.io
+
+              csrAPIVersion="$(kubectl api-resources \
+                             | grep CertificateSigningRequest \
+                             | head -1 | awk '{print $3}')"
+
+              echo "Creating server cert/key CSR and sending to k8s API controller"
               cat <<EOF | kubectl create -f -
-              apiVersion: certificates.k8s.io/v1beta1
+              apiVersion: ${csrAPIVersion}
               kind: CertificateSigningRequest
               metadata:
                 name: ${csrName}
@@ -77,6 +88,7 @@ spec:
                 groups:
                 - system:authenticated
                 request: $(cat ${tmpdir}/server.csr | base64 | tr -d '\n')
+                signerName: kubernetes.io/kubelet-serving
                 usages:
                 - digital signature
                 - key encipherment
@@ -120,7 +132,7 @@ spec:
       containers:
         - name: cyberark-sidecar-injector
           image: {{ .Values.sidecarInjectorImage }}
-          imagePullPolicy: Always
+          imagePullPolicy: {{ .Values.sidecarInjectorImagePullPolicy }}
           args:
             - -tlsCertFile=/etc/webhook/certs/cert.pem
             - -tlsKeyFile=/etc/webhook/certs/key.pem
@@ -143,5 +155,5 @@ spec:
 {{- if not .Values.csrEnabled }}
             secretName: {{ required "A valid .Values.certsSecret entry required!" .Values.certsSecret | quote }}
 {{- else }}
-            secretName: {{ include "cyberark-sidecar-injector.fullname" . }}
+            secretName: {{ include "cyberark-sidecar-injector.name" . }}
 {{- end }}

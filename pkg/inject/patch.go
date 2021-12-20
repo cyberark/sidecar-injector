@@ -1,6 +1,7 @@
 package inject
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 
@@ -188,4 +189,13 @@ func updateAnnotation(
 	}
 
 	return patch
+}
+
+func printPrettyPatch(patch []byte) string {
+	var prettyJSON bytes.Buffer
+	if err := json.Indent(&prettyJSON, patch, "", "\t"); err != nil {
+		// Could not print pretty, so print ugly
+		return string(patch)
+	}
+	return string(prettyJSON.Bytes())
 }

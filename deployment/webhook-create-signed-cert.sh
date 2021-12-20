@@ -29,7 +29,7 @@ EOF
 function latest_supported_api_version() {
   local apiGroup
   apiGroup=$(kubectl api-resources | grep "${1}" | head -1 | awk '{print $3}')
-  kubectl api-versions | grep "${apiGroup}" | cat
+  kubectl api-versions | grep "${apiGroup}" | head -n 1
 }
 
 while [[ $# -gt 0 ]]; do
@@ -84,7 +84,7 @@ DNS.3 = ${service}.${namespace}.svc
 EOF
 
 openssl genrsa -out ${tmpdir}/server-key.pem 2048
-openssl req -new -key ${tmpdir}/server-key.pem -subj "/CN=${service}.${namespace}.svc" -out ${tmpdir}/server.csr -config ${tmpdir}/csr.conf
+openssl req -new -key ${tmpdir}/server-key.pem -subj "/CN=system:node:${service}.${namespace}.svc/O=system:nodes" -out ${tmpdir}/server.csr -config ${tmpdir}/csr.conf
 
 # clean-up any previously created CSR for our service. Ignore errors if not present.
 kubectl delete csr "${csrName}" 2>/dev/null || true
@@ -99,6 +99,7 @@ spec:
   groups:
   - system:authenticated
   request: $(cat ${tmpdir}/server.csr | base64 | tr -d '\n')
+  signerName: kubernetes.io/kubelet-serving
   usages:
   - digital signature
   - key encipherment
@@ -134,5 +135,5 @@ echo ${serverCert} | openssl base64 -d -A -out ${tmpdir}/server-cert.pem
 kubectl create secret generic ${secret} \
         --from-file=key.pem=${tmpdir}/server-key.pem \
         --from-file=cert.pem=${tmpdir}/server-cert.pem \
-        --dry-run -o yaml |
+        --dry-run=client -o yaml |
     kubectl -n ${namespace} apply -f -

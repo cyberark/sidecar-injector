@@ -8,13 +8,13 @@ import (
 	"net/http"
 	"strings"
 
-	"k8s.io/api/admission/v1beta1"
-	admissionregistrationv1beta1 "k8s.io/api/admissionregistration/v1beta1"
+	admissionv1 "k8s.io/api/admission/v1"
+	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
+	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/kubernetes/pkg/apis/core/v1"
 )
 
 var (
@@ -28,21 +28,10 @@ var (
 
 func init() {
 	_ = corev1.AddToScheme(runtimeScheme)
-	_ = admissionregistrationv1beta1.AddToScheme(runtimeScheme)
+	_ = admissionregistrationv1.AddToScheme(runtimeScheme)
 	// defaulting with webhooks:
 	// https://github.com/kubernetes/kubernetes/issues/57982
 	_ = v1.AddToScheme(runtimeScheme)
-}
-
-// applyDefaultsWorkaround applies a defaulting on Container and Volume specs to address
-// this issue (https://github.com/kubernetes/kubernetes/issues/57982)
-func applyDefaultsWorkaround(containers []corev1.Container, volumes []corev1.Volume) {
-	defaulter.Default(&corev1.Pod{
-		Spec: corev1.PodSpec{
-			Containers: containers,
-			Volumes:    volumes,
-		},
-	})
 }
 
 var ignoredNamespaces = []string{
@@ -66,9 +55,9 @@ type WebhookServerParameters struct {
 	// sidecar
 }
 
-func failWithResponse(errMsg string) v1beta1.AdmissionResponse {
+func failWithResponse(errMsg string) admissionv1.AdmissionResponse {
 	log.Printf(errMsg)
-	return v1beta1.AdmissionResponse{
+	return admissionv1.AdmissionResponse{
 		Result: &metav1.Status{
 			Message: errMsg,
 		},
@@ -86,8 +75,8 @@ type SidecarInjectorConfig struct {
 // and returns the results as an AdmissionResponse.
 func HandleAdmissionRequest(
 	sidecarInjectorConfig SidecarInjectorConfig,
-	req *v1beta1.AdmissionRequest,
-) v1beta1.AdmissionResponse {
+	req *admissionv1.AdmissionRequest,
+) admissionv1.AdmissionResponse {
 	if req == nil {
 		return failWithResponse("Received empty request")
 	}
@@ -100,8 +89,9 @@ func HandleAdmissionRequest(
 	}
 
 	log.Printf(
-		"AdmissionReview for Kind=%v, Namespace=%v PodName=%v UID=%v rfc6902PatchOperation=%v UserInfo=%v",
-		req.Kind,
+		"AdmissionRequest for Version=%s, Kind=%s, Namespace=%v PodName=%v UID=%v rfc6902PatchOperation=%v UserInfo=%v",
+		req.Kind.Version,
+		req.Kind.Kind,
 		req.Namespace,
 		metaName(&pod.ObjectMeta),
 		req.UID,
@@ -114,10 +104,10 @@ func HandleAdmissionRequest(
 		log.Printf(
 			"Skipping mutation for %s/%s due to policy check",
 			req.Namespace,
-			pod.Name,
+			metaName(&pod.ObjectMeta),
 		)
 
-		return v1beta1.AdmissionResponse{
+		return admissionv1.AdmissionResponse{
 			Allowed: true,
 		}
 	}
@@ -153,6 +143,9 @@ func HandleAdmissionRequest(
 			)
 		}
 
+		secretlessCRDSuffix, _ := getAnnotation(&pod.ObjectMeta,
+			annotationSecretlessCRDSuffixKey)
+
 		conjurConnConfigMapName, _ := getAnnotation(
 			&pod.ObjectMeta,
 			annotationConjurConnConfigKey,
@@ -177,6 +170,7 @@ func HandleAdmissionRequest(
 		sidecarConfig = generateSecretlessSidecarConfig(
 			SecretlessSidecarConfig{
 				secretlessConfig:              secretlessConfig,
+				secretlessCRDSuffix:           secretlessCRDSuffix,
 				conjurConnConfigMapName:       conjurConnConfigMapName,
 				conjurAuthConfigMapName:       conjurAuthConfigMapName,
 				serviceAccountTokenVolumeName: ServiceAccountTokenVolumeName,
@@ -217,7 +211,7 @@ func HandleAdmissionRequest(
 
 		switch containerMode {
 		case "sidecar", "init", "":
-			break;
+			break
 		default:
 			return failWithResponse(
 				fmt.Sprintf(
@@ -250,7 +244,7 @@ func HandleAdmissionRequest(
 		}
 		sidecarConfig.ContainerVolumeMounts = containerVolumeMounts
 
-		break;
+		break
 	default:
 		errMsg := fmt.Sprintf(
 			"Mutation failed for pod %s, in namespace %s, due to invalid inject type annotation value = %s",
@@ -260,31 +254,29 @@ func HandleAdmissionRequest(
 		)
 		log.Printf(errMsg)
 
-		return v1beta1.AdmissionResponse{
+		return admissionv1.AdmissionResponse{
 			Result: &metav1.Status{
 				Message: errMsg,
 			},
 		}
 	}
 
-	// Workaround: https://github.com/kubernetes/kubernetes/issues/57982
-	applyDefaultsWorkaround(sidecarConfig.Containers, sidecarConfig.Volumes)
 	annotations := map[string]string{annotationStatusKey: "injected"}
 	patchBytes, err := createPatch(&pod, sidecarConfig, annotations)
 	if err != nil {
-		return v1beta1.AdmissionResponse{
+		return admissionv1.AdmissionResponse{
 			Result: &metav1.Status{
 				Message: err.Error(),
 			},
 		}
 	}
 
-	log.Printf("AdmissionResponse: patch=%v\n", string(patchBytes))
-	return v1beta1.AdmissionResponse{
+	log.Printf("AdmissionResponse: patch=%v\n", printPrettyPatch(patchBytes))
+	return admissionv1.AdmissionResponse{
 		Allowed: true,
 		Patch:   patchBytes,
-		PatchType: func() *v1beta1.PatchType {
-			pt := v1beta1.PatchTypeJSONPatch
+		PatchType: func() *admissionv1.PatchType {
+			pt := admissionv1.PatchTypeJSONPatch
 			return &pt
 		}(),
 	}
@@ -315,7 +307,7 @@ func (whsvr *WebhookServer) Serve(w http.ResponseWriter, r *http.Request) {
 
 	// Declare AdmissionResponse. This is the value that will be used to craft the
 	// response on this handler.
-	var admissionResponse v1beta1.AdmissionResponse
+	var admissionResponse admissionv1.AdmissionResponse
 
 	// Decode AdmissionRequest from raw AdmissionReview bytes
 	admissionRequest, err := NewAdmissionRequest(body)
@@ -323,7 +315,8 @@ func (whsvr *WebhookServer) Serve(w http.ResponseWriter, r *http.Request) {
 		log.Printf("could not decode body: %v", err)
 
 		// Set AdmissionResponse with error message
-		admissionResponse = v1beta1.AdmissionResponse{
+		admissionResponse = admissionv1.AdmissionResponse{
+			UID: admissionRequest.UID,
 			Result: &metav1.Status{
 				Message: err.Error(),
 			},
@@ -344,7 +337,11 @@ func (whsvr *WebhookServer) Serve(w http.ResponseWriter, r *http.Request) {
 	admissionResponse.UID = admissionRequest.UID
 
 	// Wrap AdmissonResponse in AdmissionReview, then marshal it to JSON
-	resp, err := json.Marshal(v1beta1.AdmissionReview{
+	resp, err := json.Marshal(admissionv1.AdmissionReview{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "admission.k8s.io/v1",
+			Kind:       "AdmissionReview",
+		},
 		Response: &admissionResponse,
 	})
 	if err != nil {
@@ -360,9 +357,10 @@ func (whsvr *WebhookServer) Serve(w http.ResponseWriter, r *http.Request) {
 
 // NewAdmissionRequest parses raw bytes to create an AdmissionRequest. AdmissionRequest
 // actually comes wrapped inside the bytes of an AdmissionReview.
-func NewAdmissionRequest(reviewRequestBytes []byte) (*v1beta1.AdmissionRequest, error) {
-	var ar v1beta1.AdmissionReview
+func NewAdmissionRequest(reviewRequestBytes []byte) (*admissionv1.AdmissionRequest, error) {
+	var ar admissionv1.AdmissionReview
 	_, _, err := deserializer.Decode(reviewRequestBytes, nil, &ar)
 
+	log.Printf("Received AdmissionReview, APIVersion: %s, Kind: %s\n", ar.APIVersion, ar.Kind)
 	return ar.Request, err
 }
