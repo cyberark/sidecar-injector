@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   works on Kubernetes v1.22 or newer and OpenShift v4.9 or newer.
   [#62](https://github.com/cyberark/sidecar-injector/pull/62)
 
+### Security
+- Added replace statements to go.mod to remove vulnerable dependency versions from the dependency tree
+  [cyberark/sidecar-injector#68](https://github.com/cyberark/sidecar-injector/pull/68)
+
 ## [0.1.1] - 2020-06-17
 
 ### Added
