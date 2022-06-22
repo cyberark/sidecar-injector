@@ -62,6 +62,8 @@ replace golang.org/x/net v0.0.0-20201021035429-f5854403a974 => golang.org/x/net 
 
 replace golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4 => golang.org/x/net v0.0.0-20211209124913-491a49abca63
 
+replace golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 => golang.org/x/net v0.0.0-20211209124913-491a49abca63
+
 replace golang.org/x/text v0.3.0 => golang.org/x/text v0.3.7
 
 replace golang.org/x/text v0.3.2 => golang.org/x/text v0.3.7
