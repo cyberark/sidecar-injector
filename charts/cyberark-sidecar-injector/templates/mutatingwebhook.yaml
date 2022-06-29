@@ -8,7 +8,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 webhooks:
-  - name: sidecar-injector.cyberark.com
+  - name: sidecar-injector.conjur.org
     clientConfig:
       service:
         name: {{ include "cyberark-sidecar-injector.name" . | quote }}

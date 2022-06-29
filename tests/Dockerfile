@@ -1,6 +1,7 @@
 FROM google/cloud-sdk:latest
 
 ARG HELM_VERSION
+ARG KUBECTL_VERSION=1.22.0
 
 RUN mkdir -p /src
 WORKDIR /src
@@ -20,7 +21,7 @@ RUN apt-get update -y && \
     rm -rf /var/lib/apt/lists/*
 
 # Install kubectl CLI
-RUN wget -O /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v1.11.3/bin/linux/amd64/kubectl && \
+RUN wget -O /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v"${KUBECTL_VERSION}"/bin/linux/amd64/kubectl && \
     chmod +x /usr/local/bin/kubectl
 
 # Install kubectx and kubens

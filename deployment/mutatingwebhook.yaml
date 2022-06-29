@@ -5,7 +5,7 @@ metadata:
   labels:
     app: cyberark-sidecar-injector
 webhooks:
-  - name: sidecar-injector.cyberark.com
+  - name: sidecar-injector.conjur.org
     clientConfig:
       service:
         name: ${service}

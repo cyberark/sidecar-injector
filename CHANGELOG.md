@@ -8,11 +8,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 - Dropped support for Helm V2 and converted to Helm V3.
-  [#60](https://github.com/cyberark/sidecar-injector/pull/60)
+  [cyberark/sidecar-injector#60](https://github.com/cyberark/sidecar-injector/pull/60)
 - K8s APIs used for mutating webhook request/response messages are upgraded
   from the deprecated 'v1beta1' versions to 'v1' so that the Sidecar Injector
   works on Kubernetes v1.22 or newer and OpenShift v4.9 or newer.
-  [#62](https://github.com/cyberark/sidecar-injector/pull/62)
+  [cyberark/sidecar-injector#62](https://github.com/cyberark/sidecar-injector/pull/62)
+- BREAKING CHANGE: Changed annotations to be consistent with other Cyberark repositories.
+  sidecar-injector.cyberark.com is changed to conjur.org
+  All user manifests must be changed to use the new annotations. [cyberark/sidecar-injector#70](https://github.com/cyberark/sidecar-injector/pull/70)
 
 ### Security
 - Added replace statements to go.mod to remove vulnerable dependency versions from the dependency tree

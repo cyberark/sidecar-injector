@@ -43,9 +43,9 @@ object.
     + [Installing the Sidecar Injector (Helm)](#installing-the-sidecar-injector-helm)
   * [Using the Sidecar Injector](#using-the-sidecar-injector)
     + [Configuration](#configuration)
-      - [sidecar-injector.cyberark.com/secretlessConfig](#sidecar-injectorcyberarkcomsecretlessconfig)
-      - [sidecar-injector.cyberark.com/conjurConnConfig](#sidecar-injectorcyberarkcomconjurconnconfig)
-      - [sidecar-injector.cyberark.com/conjurAuthConfig](#sidecar-injectorcyberarkcomconjurauthconfig)
+      - [conjur.org/secretlessConfig](#conjurorgsecretlessconfig)
+      - [conjur.org/conjurConnConfig](#conjurorgconjurconnconfig)
+      - [conjur.org/conjurAuthConfig](#conjurorgconjurauthconfig)
   * [Secretless Sidecar Injection Example](#secretless-sidecar-injection-example)
   * [Conjur Authenticator/Secretless Sidecar Injection Example](#conjur-authenticatorsecretless-sidecar-injection-example)
     + [Deploy Authenticator Sidecar](#deploy-authenticator-sidecar)
@@ -290,25 +290,31 @@ on how to accept the CSR request. The CSR request **must** be approved.
 
 The configurable parameters should be set as annotations on the **Pod template spec** and
 *NOT on the Deployment, Job or otherwise**. The sidecar injector will not inject the
-sidecar into pods by default. Add the `sidecar-injector.cyberark.com/inject` annotation
+sidecar into pods by default. Add the `conjur.org/inject` annotation
 with value `true` to the **Pod template spec** to enable injection. Injection will not go
 ahead if the annotations are not on the **Pod template spec**.
+
+**Note:** Configurable parameters of the Sidecar Injector have changed!
+
+For Sidecar injector versions 0.1.1 and below the parameters used `sidecar-injector.cyberark.com/xxx`.
+This has been updated to `conjur.org/xxx` in version 0.2.0 and above.
+
 
 The following table lists the configurable parameters of the Sidecar Injector and their
 default values.
 
 | Parameter                     | Description                                     | Default                                                    |
 | -----------------------       | ---------------------------------------------   | ---------------------------------------------------------- |
-| `sidecar-injector.cyberark.com/inject`| Enable the Sidecar Injector by setting to `true`            | `nil` (required) |
-| `sidecar-injector.cyberark.com/secretlessConfig` | ConfigMap holding Secretless configuration               |  `nil` (required for secretless)  |  
-| `sidecar-injector.cyberark.com/conjurAuthConfig` | ConfigMap holding Conjur authentication configuration            |  `nil` (required for authenticator |
-| `sidecar-injector.cyberark.com/conjurConnConfig` | ConfigMap holding Conjur connection configuration               |  `nil` (required for authenticator |
-| `sidecar-injector.cyberark.com/injectType` | Injected Sidecar type (`secretless` or `authenticator`)                    |  `nil` (required) |
-| `sidecar-injector.cyberark.com/conjurTokenReceivers` | Comma-separated list of the names of containers, in the pod, that will be injected with `conjur-access-token` VolumeMounts. (e.g. `app-container-1,app-container-2`)                  |  `nil` (only applies to authenticator) |
-| `sidecar-injector.cyberark.com/containerMode` | Sidecar Container mode (`init` or `sidecar`)                  |  `nil` (only applies to authenticator) |
-| `sidecar-injector.cyberark.com/containerName` | Sidecar Container name                  |  `nil` (only applies to authenticator)                              |
+| `conjur.org/inject`| Enable the Sidecar Injector by setting to `true`            | `nil` (required) |
+| `conjur.org/secretlessConfig` | ConfigMap holding Secretless configuration               |  `nil` (required for secretless)  |
+| `conjur.org/conjurAuthConfig` | ConfigMap holding Conjur authentication configuration            |  `nil` (required for authenticator |
+| `conjur.org/conjurConnConfig` | ConfigMap holding Conjur connection configuration               |  `nil` (required for authenticator |
+| `conjur.org/injectType` | Injected Sidecar type (`secretless` or `authenticator`)                    |  `nil` (required) |
+| `conjur.org/conjurTokenReceivers` | Comma-separated list of the names of containers, in the pod, that will be injected with `conjur-access-token` VolumeMounts. (e.g. `app-container-1,app-container-2`)                  |  `nil` (only applies to authenticator) |
+| `conjur.org/containerMode` | Sidecar Container mode (`init` or `sidecar`)                  |  `nil` (only applies to authenticator) |
+| `conjur.org/containerName` | Sidecar Container name                  |  `nil` (only applies to authenticator)                              |
 
-#### sidecar-injector.cyberark.com/secretlessConfig
+#### conjur.org/secretlessConfig
 
 There are three options for the value of secretlessConfig:
   1. configmapName
@@ -324,7 +330,7 @@ If a config map is referenced, it should contain the following path:
 For help using a CRD to configure secretless, Refer to the [secretless CRD readme](
 https://github.com/cyberark/secretless-broker/tree/main/resource-definitions).
 
-#### sidecar-injector.cyberark.com/conjurConnConfig
+#### conjur.org/conjurConnConfig
 
 Expected to contain the following paths:
 
@@ -334,7 +340,7 @@ Expected to contain the following paths:
 + CONJUR_ACCOUNT - the account name for the Conjur instance you are connecting to
 + CONJUR_SSL_CERTIFICATE - the x509 certificate that was created when Conjur was initiated
 
-#### sidecar-injector.cyberark.com/conjurAuthConfig
+#### conjur.org/conjurAuthConfig
 
 Expected to contain the following path:
 
@@ -422,9 +428,9 @@ to allow the cyberark-sidecar-injector to operate on pods created in this namesp
     metadata:
       name: test-app
       annotations:
-        sidecar-injector.cyberark.com/inject: "yes"
-        sidecar-injector.cyberark.com/secretlessConfig: "secretless"
-        sidecar-injector.cyberark.com/injectType: "secretless"
+        conjur.org/inject: "yes"
+        conjur.org/secretlessConfig: "secretless"
+        conjur.org/injectType: "secretless"
       labels:
         app: test-app
     spec:
@@ -602,7 +608,7 @@ communicate with the Conjur appliance.
 sidecar injector. The injection is configured via annotations. 
     
     + The `conjur` ConfigMap is used for both Conjur Authentication and Connection configuration
-    + The `sidecar-injector.cyberark.com/containerName` is set to "secretless" because the
+    + The `conjur.org/containerName` is set to "secretless" because the
 corresponding Conjur identity to the service account used expects the sidecar container to
 be named secretless.
 
@@ -616,13 +622,13 @@ be named secretless.
     kind: Pod
     metadata:
       annotations:
-        sidecar-injector.cyberark.com/conjurAuthConfig: conjur
-        sidecar-injector.cyberark.com/conjurConnConfig: conjur
-        sidecar-injector.cyberark.com/containerMode: ${containerMode}
-        sidecar-injector.cyberark.com/conjurTokenReceivers: "app"
-        sidecar-injector.cyberark.com/inject: "yes"
-        sidecar-injector.cyberark.com/injectType: authenticator
-        sidecar-injector.cyberark.com/containerName: secretless
+        conjur.org/conjurAuthConfig: conjur
+        conjur.org/conjurConnConfig: conjur
+        conjur.org/containerMode: ${containerMode}
+        conjur.org/conjurTokenReceivers: "app"
+        conjur.org/inject: "yes"
+        conjur.org/injectType: authenticator
+        conjur.org/containerName: secretless
       labels:
         app: test-app
       name: test-app
@@ -651,7 +657,7 @@ be named secretless.
     The `/run/conjur/access-token` file contains the access token which is injected by the
     **Authenticator** sidecar upon successful authentication against the Conjur appliance.
     Note that this file is volume mounted into the application pod's main container as a
-    result of the annotation `sidecar-injector.cyberark.com/conjurTokenReceivers` being
+    result of the annotation `conjur.org/conjurTokenReceivers` being
     set to that container's name.
 
     ```bash
@@ -723,11 +729,11 @@ be named secretless.
     kind: Pod
     metadata:
       annotations:
-        sidecar-injector.cyberark.com/conjurAuthConfig: conjur
-        sidecar-injector.cyberark.com/conjurConnConfig: conjur
-        sidecar-injector.cyberark.com/inject: "yes"
-        sidecar-injector.cyberark.com/injectType: secretless
-        sidecar-injector.cyberark.com/secretlessConfig: secretless
+        conjur.org/conjurAuthConfig: conjur
+        conjur.org/conjurConnConfig: conjur
+        conjur.org/inject: "yes"
+        conjur.org/injectType: secretless
+        conjur.org/secretlessConfig: secretless
       labels:
         app: test-app
       name: test-app
