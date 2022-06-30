@@ -6,7 +6,7 @@
       "pod-template-hash": "2710681425"
     },
     "annotations": {
-      "sidecar-injector.cyberark.com/status": "injected"
+      "conjur.org/status": "injected"
     }
   },
   "spec": {

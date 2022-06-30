@@ -6,13 +6,13 @@
       "pod-template-hash": "2710681425"
     },
     "annotations": {
-      "sidecar-injector.cyberark.com/conjurAuthConfig": "conjur",
-      "sidecar-injector.cyberark.com/conjurConnConfig": "conjur",
-      "sidecar-injector.cyberark.com/containerMode": "sidecar",
-      "sidecar-injector.cyberark.com/conjurTokenReceivers": "nginx-2",
-      "sidecar-injector.cyberark.com/inject": "true",
-      "sidecar-injector.cyberark.com/injectType": "authenticator",
-      "sidecar-injector.cyberark.com/containerName": "authenticator-name"
+      "conjur.org/conjurAuthConfig": "conjur",
+      "conjur.org/conjurConnConfig": "conjur",
+      "conjur.org/containerMode": "sidecar",
+      "conjur.org/conjurTokenReceivers": "nginx-2",
+      "conjur.org/inject": "true",
+      "conjur.org/injectType": "authenticator",
+      "conjur.org/containerName": "authenticator-name"
     }
   },
   "spec": {

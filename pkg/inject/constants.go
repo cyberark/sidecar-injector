@@ -1,14 +1,14 @@
 package inject
 
 const (
-	annotationConjurAuthConfigKey     = "sidecar-injector.cyberark.com/conjurAuthConfig"
-	annotationConjurConnConfigKey     = "sidecar-injector.cyberark.com/conjurConnConfig"
-	annotationContainerNameKey        = "sidecar-injector.cyberark.com/containerName"
-	annotationContainerModeKey        = "sidecar-injector.cyberark.com/containerMode"
-	annotationConjurTokenReceiversKey = "sidecar-injector.cyberark.com/conjurTokenReceivers"
-	annotationInjectKey               = "sidecar-injector.cyberark.com/inject"
-	annotationInjectTypeKey           = "sidecar-injector.cyberark.com/injectType"
-	annotationSecretlessConfigKey     = "sidecar-injector.cyberark.com/secretlessConfig"
-	annotationSecretlessCRDSuffixKey  = "sidecar-injector.cyberark.com/secretlessCRDSuffix"
-	annotationStatusKey               = "sidecar-injector.cyberark.com/status"
+	annotationConjurAuthConfigKey     = "conjur.org/conjurAuthConfig"
+	annotationConjurConnConfigKey     = "conjur.org/conjurConnConfig"
+	annotationContainerNameKey        = "conjur.org/containerName"
+	annotationContainerModeKey        = "conjur.org/containerMode"
+	annotationConjurTokenReceiversKey = "conjur.org/conjurTokenReceivers"
+	annotationInjectKey               = "conjur.org/inject"
+	annotationInjectTypeKey           = "conjur.org/injectType"
+	annotationSecretlessConfigKey     = "conjur.org/secretlessConfig"
+	annotationSecretlessCRDSuffixKey  = "conjur.org/secretlessCRDSuffix"
+	annotationStatusKey               = "conjur.org/status"
 )

@@ -111,10 +111,10 @@ spec:
       labels:
         app: sb-sci-echoserver
       annotations:
-        sidecar-injector.cyberark.com/inject: "yes"
-        sidecar-injector.cyberark.com/secretlessConfig: "k8s/crd#crd-basic-auth-proxy"
-        sidecar-injector.cyberark.com/secretlessCRDSuffix: ${SECRETLESS_CRD_SUFFIX}
-        sidecar-injector.cyberark.com/injectType: "secretless"
+        conjur.org/inject: "yes"
+        conjur.org/secretlessConfig: "k8s/crd#crd-basic-auth-proxy"
+        conjur.org/secretlessCRDSuffix: ${SECRETLESS_CRD_SUFFIX}
+        conjur.org/injectType: "secretless"
 
     spec:
       serviceAccountName: secretless-crd-${SECRETLESS_CRD_SUFFIX}
