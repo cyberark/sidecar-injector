@@ -16,14 +16,14 @@ type injectionTestCase struct {
 func TestSidecarInjection(t *testing.T) {
 	var testCases = []injectionTestCase{
 		{
-			description:                         "Secretless",
-			annotatedPodTemplateSpecPath:        "./testdata/secretless-annotated-pod.json",
-			expectedInjectedPodTemplateSpecPath: "./testdata/secretless-mutated-pod.json",
-		},
-		{
 			description:                         "Kubernetes Authenticator",
 			annotatedPodTemplateSpecPath:        "./testdata/authenticator-annotated-pod.json",
 			expectedInjectedPodTemplateSpecPath: "./testdata/authenticator-mutated-pod.json",
+		},
+		{
+			description:                         "Kubernetes Authenticator",
+			annotatedPodTemplateSpecPath:        "./testdata/authenticator-annotated-pod-with-image.json",
+			expectedInjectedPodTemplateSpecPath: "./testdata/authenticator-mutated-pod-with-image.json",
 		},
 	}
 

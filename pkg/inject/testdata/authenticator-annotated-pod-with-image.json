@@ -12,7 +12,8 @@
       "conjur.org/conjur-token-receivers": "nginx-2",
       "conjur.org/inject": "true",
       "conjur.org/inject-type": "authenticator",
-      "conjur.org/container-name": "authenticator-name"
+      "conjur.org/container-name": "authenticator-name",
+      "conjur.org/container-image": "cyberark/conjur-authn-k8s-client:12345"
     }
   },
   "spec": {

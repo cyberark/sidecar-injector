@@ -112,9 +112,9 @@ spec:
         app: sb-sci-echoserver
       annotations:
         conjur.org/inject: "yes"
-        conjur.org/secretlessConfig: "k8s/crd#crd-basic-auth-proxy"
-        conjur.org/secretlessCRDSuffix: ${SECRETLESS_CRD_SUFFIX}
-        conjur.org/injectType: "secretless"
+        conjur.org/secretless-config: "k8s/crd#crd-basic-auth-proxy"
+        conjur.org/secretless-CRD-suffix: ${SECRETLESS_CRD_SUFFIX}
+        conjur.org/inject-type: "secretless"
 
     spec:
       serviceAccountName: secretless-crd-${SECRETLESS_CRD_SUFFIX}

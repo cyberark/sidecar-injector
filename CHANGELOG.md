@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- Add support for selection of sidecar container versions
+  [cyberark/sidecar-injector#71](https://github.com/cyberark/sidecar-injector/pull/71)
+
 ### Changed
 - Dropped support for Helm V2 and converted to Helm V3.
   [cyberark/sidecar-injector#60](https://github.com/cyberark/sidecar-injector/pull/60)
