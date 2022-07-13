@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+set -eox pipefail
+
+cd $(dirname $0)
+
+function main() {
+  build_image
+  run_unit_tests
+}
+
+
+function run_unit_tests() {
+  echo "Running unit tests..."
+  cd ../pkg/inject
+  go test -v
+  echo "Unit test exit status: $?"
+}
+
+function build_image() {
+  echo "Building image..."
+  ./build
+}
+
+main

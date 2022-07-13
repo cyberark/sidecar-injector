@@ -51,8 +51,7 @@ type WebhookServerParameters struct {
 	CertFile                    string // Path to the x509 certificate for https
 	KeyFile                     string // Path to the x509 private key matching `CertFile`
 	SecretlessContainerImage    string // Container image for the Secretless sidecar
-	AuthenticatorContainerImage string // Container image for the Kubernetes Authenticator
-	// sidecar
+	AuthenticatorContainerImage string // Container image for the K8s Authenticator sidecar
 }
 
 func failWithResponse(errMsg string) admissionv1.AdmissionResponse {
@@ -67,8 +66,7 @@ func failWithResponse(errMsg string) admissionv1.AdmissionResponse {
 // SidecarInjectorConfig are configuration values for the sidecar injector logic
 type SidecarInjectorConfig struct {
 	SecretlessContainerImage    string // Container image for the Secretless sidecar
-	AuthenticatorContainerImage string // Container image for the Kubernetes Authenticator
-	// sidecar
+	AuthenticatorContainerImage string // Container image for the K8s Authenticator sidecar
 }
 
 // HandleAdmissionRequest applies the sidecar-injector logic to the AdmissionRequest
@@ -155,6 +153,14 @@ func HandleAdmissionRequest(
 			annotationConjurAuthConfigKey,
 		)
 
+		imageName, err := getAnnotation(
+			&pod.ObjectMeta,
+			annotationContainerImageKey,
+		)
+		if err != nil {
+			imageName = sidecarInjectorConfig.SecretlessContainerImage
+		}
+
 		ServiceAccountTokenVolumeName, err := getServiceAccountTokenVolumeName(&pod)
 		if err != nil {
 			return failWithResponse(
@@ -174,7 +180,7 @@ func HandleAdmissionRequest(
 				conjurConnConfigMapName:       conjurConnConfigMapName,
 				conjurAuthConfigMapName:       conjurAuthConfigMapName,
 				serviceAccountTokenVolumeName: ServiceAccountTokenVolumeName,
-				sidecarImage:                  sidecarInjectorConfig.SecretlessContainerImage,
+				sidecarImage:                  imageName,
 			},
 		)
 		break
@@ -224,12 +230,20 @@ func HandleAdmissionRequest(
 			)
 		}
 
+		imageName, err := getAnnotation(
+			&pod.ObjectMeta,
+			annotationContainerImageKey,
+		)
+		if err != nil {
+			imageName = sidecarInjectorConfig.AuthenticatorContainerImage
+		}
+
 		sidecarConfig = generateAuthenticatorSidecarConfig(AuthenticatorSidecarConfig{
 			conjurConnConfigMapName: conjurConnConfigMapName,
 			conjurAuthConfigMapName: conjurAuthConfigMapName,
 			containerMode:           containerMode,
 			containerName:           containerName,
-			sidecarImage:            sidecarInjectorConfig.AuthenticatorContainerImage,
+			sidecarImage:            imageName,
 		})
 
 		containerVolumeMounts := ContainerVolumeMounts{}
