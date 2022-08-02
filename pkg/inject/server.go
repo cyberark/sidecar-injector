@@ -46,12 +46,13 @@ type WebhookServer struct {
 
 // Webhook Server parameters
 type WebhookServerParameters struct {
-	NoHTTPS                     bool   // Runs an HTTP server when true
-	Port                        int    // Webhook Server port
-	CertFile                    string // Path to the x509 certificate for https
-	KeyFile                     string // Path to the x509 private key matching `CertFile`
-	SecretlessContainerImage    string // Container image for the Secretless sidecar
-	AuthenticatorContainerImage string // Container image for the K8s Authenticator sidecar
+	NoHTTPS                       bool   // Runs an HTTP server when true
+	Port                          int    // Webhook Server port
+	CertFile                      string // Path to the x509 certificate for https
+	KeyFile                       string // Path to the x509 private key matching `CertFile`
+	SecretlessContainerImage      string // Container image for the Secretless sidecar
+	AuthenticatorContainerImage   string // Container image for the K8s Authenticator sidecar
+	SecretsProviderContainerImage string // Container image for the Secrets Provider sidecar
 }
 
 func failWithResponse(errMsg string) admissionv1.AdmissionResponse {
@@ -65,8 +66,9 @@ func failWithResponse(errMsg string) admissionv1.AdmissionResponse {
 
 // SidecarInjectorConfig are configuration values for the sidecar injector logic
 type SidecarInjectorConfig struct {
-	SecretlessContainerImage    string // Container image for the Secretless sidecar
-	AuthenticatorContainerImage string // Container image for the K8s Authenticator sidecar
+	SecretlessContainerImage      string // Container image for the Secretless sidecar
+	AuthenticatorContainerImage   string // Container image for the K8s Authenticator sidecar
+	SecretsProviderContainerImage string // Container image for the Secrets Provider
 }
 
 // HandleAdmissionRequest applies the sidecar-injector logic to the AdmissionRequest
@@ -121,8 +123,10 @@ func HandleAdmissionRequest(
 	for i := range conjurTokenReceivers {
 		conjurTokenReceivers[i] = strings.TrimSpace(conjurTokenReceivers[i])
 	}
-
 	var sidecarConfig *PatchConfig
+	annotations := make(map[string]string)
+	annotations[annotationStatusKey] = "injected"
+
 	switch injectType {
 	case "secretless":
 
@@ -259,6 +263,63 @@ func HandleAdmissionRequest(
 		sidecarConfig.ContainerVolumeMounts = containerVolumeMounts
 
 		break
+	case "secrets-provider":
+		containerImage, err := getAnnotation(
+			&pod.ObjectMeta,
+			annotationContainerImageKey,
+		)
+		if err != nil {
+			containerImage = sidecarInjectorConfig.SecretsProviderContainerImage
+			log.Printf("Using container image %s", containerImage)
+		}
+		switch containerMode {
+		case "sidecar", "init", "":
+			break
+		default:
+			return failWithResponse(
+				fmt.Sprintf(
+					"Mutation failed for pod %s, in namespace %s, due to %s value (%s) not supported",
+					pod.Name,
+					req.Namespace,
+					annotationContainerModeKey,
+					containerMode,
+				),
+			)
+		}
+		secretsDestination, err := getAnnotation(
+			&pod.ObjectMeta,
+			annotationSecretsDestinationKey,
+		)
+		sidecarConfig = generateSecretsProviderSidecarConfig(
+			SecretsProviderSidecarConfig{
+				containerMode: containerMode,
+				containerName: containerName,
+				sidecarImage: containerImage,
+				secretsDestination: secretsDestination,
+			},
+		)
+		containerVolumeMounts := ContainerVolumeMounts{}
+		// Here we are using the "conjur.org/conjur-token-receivers" annotation
+		// We need to either
+		// a - rename this annotation to a common name
+		// b - add a similar annotation for Secrets Provider
+		// c - add the volume mount to all containers
+		for _, receiveContainerName := range conjurTokenReceivers {
+			containerVolumeMounts[receiveContainerName] = []corev1.VolumeMount{
+				{
+					Name:      "conjur-status",
+					ReadOnly:  false,
+					MountPath: "/conjur/status",
+				},
+				{
+					Name:      "conjur-secrets",
+					ReadOnly:  false,
+					MountPath: "/conjur/secrets",
+				},
+			}
+		}
+		sidecarConfig.ContainerVolumeMounts = containerVolumeMounts
+		break
 	default:
 		errMsg := fmt.Sprintf(
 			"Mutation failed for pod %s, in namespace %s, due to invalid inject type annotation value = %s",
@@ -275,7 +336,6 @@ func HandleAdmissionRequest(
 		}
 	}
 
-	annotations := map[string]string{annotationStatusKey: "injected"}
 	patchBytes, err := createPatch(&pod, sidecarConfig, annotations)
 	if err != nil {
 		return admissionv1.AdmissionResponse{
@@ -339,8 +399,9 @@ func (whsvr *WebhookServer) Serve(w http.ResponseWriter, r *http.Request) {
 		// Set AdmissionResponse with results from HandleAdmissionRequest
 		admissionResponse = HandleAdmissionRequest(
 			SidecarInjectorConfig{
-				SecretlessContainerImage:    whsvr.Params.SecretlessContainerImage,
-				AuthenticatorContainerImage: whsvr.Params.AuthenticatorContainerImage,
+				SecretlessContainerImage:      whsvr.Params.SecretlessContainerImage,
+				AuthenticatorContainerImage:   whsvr.Params.AuthenticatorContainerImage,
+				SecretsProviderContainerImage: whsvr.Params.SecretsProviderContainerImage,
 			},
 			admissionRequest,
 		)

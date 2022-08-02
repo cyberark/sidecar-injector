@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -168,26 +167,21 @@ func addVolume(
 func updateAnnotation(
 	target, added map[string]string,
 ) (patch []rfc6902PatchOperation) {
+
 	for key, value := range added {
-		if target == nil || target[key] == "" {
-			target = map[string]string{}
-
-			patch = append(patch, rfc6902PatchOperation{
-				Op:   patchOperationAdd,
-				Path: "/metadata/annotations",
-				Value: map[string]string{
-					key: value,
-				},
-			})
-		} else {
-			patch = append(patch, rfc6902PatchOperation{
-				Op:    patchOperationReplace,
-				Path:  "/metadata/annotations/" + key,
-				Value: value,
-			})
-		}
+		target[key] = value
 	}
+	// Remove annotations that are only for the sidecar injector
+	for _, value := range sidecarInjectorAnnot {
+		delete(target, value)
+    }
+	path := "/metadata/annotations"
 
+	patch = append(patch, rfc6902PatchOperation{
+		Op:    patchOperationAdd,
+		Path:  path,
+		Value: target,
+	})
 	return patch
 }
 

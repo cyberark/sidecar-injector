@@ -19,8 +19,9 @@ func applyPatchToAdmissionRequest(reviewRequestBytes []byte) ([]byte, error) {
 	}
 	admissionRes := HandleAdmissionRequest(
 		SidecarInjectorConfig{
-			SecretlessContainerImage:    "secretless-image",
-			AuthenticatorContainerImage: "authenticator-image",
+			SecretlessContainerImage:      "secretless-image",
+			AuthenticatorContainerImage:   "authenticator-image",
+			SecretsProviderContainerImage: "secrets-provider-image",
 		},
 		req,
 	)

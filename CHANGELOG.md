@@ -6,9 +6,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.2.0] - 2022-08-02
+
 ### Added
 - Add support for selection of sidecar container versions
   [cyberark/sidecar-injector#71](https://github.com/cyberark/sidecar-injector/pull/71)
+- Add ability to set (and override default) deployment resource `apiVersion` in manifests.
+    [#27](https://github.com/cyberark/sidecar-injector/pull/27)
+- Add support for secrets-provider-for-k8s
+  [cyberark/sidecar-injector#72](https://github.com/cyberark/sidecar-injector/pull/72)
 
 ### Changed
 - Dropped support for Helm V2 and converted to Helm V3.
@@ -20,21 +26,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - BREAKING CHANGE: Changed annotations to be consistent with other Cyberark repositories.
   sidecar-injector.cyberark.com is changed to conjur.org
   All user manifests must be changed to use the new annotations. [cyberark/sidecar-injector#70](https://github.com/cyberark/sidecar-injector/pull/70)
+- Deployment resource `apiVersion` (in manifests) changed from `extensions/v1beta1` to
+  `apps/v1`. [#47](https://github.com/cyberark/sidecar-injector/pull/47)
 
 ### Security
 - Added replace statements to go.mod to remove vulnerable dependency versions from the dependency tree
   [cyberark/sidecar-injector#68](https://github.com/cyberark/sidecar-injector/pull/68)
   [cyberark/sidecar-injector#69](https://github.com/cyberark/sidecar-injector/pull/69)
-
-## [0.1.1] - 2020-06-17
-
-### Added
-- Add ability to set (and override default) deployment resource `apiVersion` in manifests.
-  [#28](https://github.com/cyberark/sidecar-injector/issues/28)
-
-### Changed
-- Deployment resource `apiVersion` (in manifests) changed from `extensions/v1beta1` to
-  `apps/v1`. [#46](https://github.com/cyberark/sidecar-injector/issues/46)
 
 ## [0.1.0] - 2020-05-28
 
@@ -51,6 +49,5 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Ability to configure the sidecar container images by specifying flags on the sidecar
   injector binary [#29](https://github.com/cyberark/sidecar-injector/issues/29).
 
-[Unreleased]: https://github.com/cyberark/sidecar-injector/compare/v0.1.1...HEAD
-[0.1.1]: https://github.com/cyberark/sidecar-injector/compare/v0.1.0...v0.1.1
+[Unreleased]: https://github.com/cyberark/sidecar-injector/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/cyberark/sidecar-injector/releases/tag/v0.1.0

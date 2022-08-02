@@ -11,9 +11,10 @@ type injectionTestCase struct {
 	description                         string
 	annotatedPodTemplateSpecPath        string
 	expectedInjectedPodTemplateSpecPath string
+	env                                 map[string]string
 }
 
-func TestSidecarInjection(t *testing.T) {
+func TestAuthenticatorSidecarInjection(t *testing.T) {
 	var testCases = []injectionTestCase{
 		{
 			description:                         "Kubernetes Authenticator",
@@ -21,7 +22,7 @@ func TestSidecarInjection(t *testing.T) {
 			expectedInjectedPodTemplateSpecPath: "./testdata/authenticator-mutated-pod.json",
 		},
 		{
-			description:                         "Kubernetes Authenticator",
+			description:                         "Kubernetes Authenticator with image",
 			annotatedPodTemplateSpecPath:        "./testdata/authenticator-annotated-pod-with-image.json",
 			expectedInjectedPodTemplateSpecPath: "./testdata/authenticator-mutated-pod-with-image.json",
 		},
