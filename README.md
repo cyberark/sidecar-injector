@@ -17,14 +17,22 @@ pods (via kubectl describe) to see the injected sidecar._
 
 ***
 
-**Status**: Beta
+##Status: Beta
 
 The CyberArk Sidecar Injector is currently in beta.
 
-Naming and functionality are still subject to *breaking* changes.
+Naming and functionality are still subject to **breaking** changes.
 
 ***
+## Certification Level
+![](https://img.shields.io/badge/Certification%20Level-Certified-28A745?link=https://github.com/cyberark/community/blob/master/Conjur/conventions/certification-levels.md)
 
+The Secrets Provider push to File feature is a **Certified** level project.
+Certified projects **have been reviewed and are supported by CyberArk**. For more
+detailed information on our certification levels, see
+[our community guidelines](https://github.com/cyberark/community/blob/master/Conjur/conventions/certification-levels.md#community).
+
+***
 This document shows how to deploy and use the CyberArk Sidecar Injector
 [mutating admission webhook controller](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#mutatingadmissionwebhook)
 which injects sidecar container(s) into a pod prior to persistence of the underlying
@@ -35,6 +43,7 @@ object.
   * [Available Sidecars](#available-sidecars)
     + [Secretless](#secretless)
     + [Authenticator](#authenticator)
+    + [Secrets Provider](#secrets-provider)
   * [Installation](#installation)
     + [Installing the Sidecar Injector (Manually)](#installing-the-sidecar-injector-manually)
       - [Dedicated Namespace](#dedicated-namespace)
@@ -80,7 +89,8 @@ This section enumerates the available sidecars. The choice of sidecar is made vi
 annotations - see the [Configuration](#configuration) section for details.
 
 1. [Secretless](#secretless)
-1. [Authenticator](#authenticator)
+2. [Authenticator](#authenticator)
+3. [Secrets Provider](#secrets-provider)
 
 #### Secretless
 See the [README](https://github.com/cyberark/secretless-broker)
@@ -101,6 +111,24 @@ Injects:
   + a read-only **Volume Mount** at `/run/conjur` of the `conjur-access-token` Volume for
     each of the containers whose names appears in the comma-separated list of container
     names that you may configure.
+
+#### Secrets Provider
+See the [README](https://github.com/cyberark/secrets-provider-for-k8s)
+
+Injects:
+  + Newly created shareable **in-memory Volumes** named `podInfo` and `conjur-secrets`.
+  + a configurable **[Secrets Provider container](https://github.com/cyberark/secrets-provider-for-k8s)**
+  + **Volume Mounts** at `/conjur/secrets` and `/conjur/podinfo`
+
+Requires:
+  + a conjur-connect configMap in the namespace that the sidecar resides in.
+  + The sidecar deployment manifest must include the conjur-connect configmap
+
+```
+    envFrom:
+      - configMapRef:
+          name: conjur-connect
+```
 
 ### Mandatory TLS
 
@@ -179,13 +207,15 @@ Kubernetes cluster
         deployment/mutatingwebhook-ca-bundle.yaml
     ```
 
-3. Generate sidecar injector deployment manifest
+3. Generate sidecar injector deployment manifest.
+Note: add `--secrets-provider ` if using secrets provider.
     ```bash
     ~$ ./deployment/deployment.yaml.sh \
          --deployment-api-version apps/v1 \
          --sidecar-injector-image cyberark/sidecar-injector:latest \
          --secretless-image cyberark/secretless-broker:latest \
          --authenticator-image cyberark/conjur-kubernetes-authenticator:latest \
+         --secrets-provider-image cyberark/secrets-provider-for-k8s:latest
          > ./deployment/deployment.yaml
     ```
 
@@ -309,11 +339,11 @@ default values.
 | `conjur.org/secretless-config` | ConfigMap holding Secretless configuration               |  `nil` (required for secretless)  |
 | `conjur.org/conjurAuthConfig` | ConfigMap holding Conjur authentication configuration            |  `nil` (required for authenticator |
 | `conjur.org/conjurConnConfig` | ConfigMap holding Conjur connection configuration               |  `nil` (required for authenticator |
-| `conjur.org/inject-type` | Injected Sidecar type (`secretless` or `authenticator`)                    |  `nil` (required) |
+| `conjur.org/inject-type` | Injected Sidecar type (`secretless`, `authenticator` or `secrets-provider`)                    |  `nil` (required) |
 | `conjur.org/conjur-token-receivers` | Comma-separated list of the names of containers, in the pod, that will be injected with `conjur-access-token` VolumeMounts. (e.g. `app-container-1,app-container-2`)                  |  `nil` (only applies to authenticator) |
-| `conjur.org/container-mode` | Sidecar Container mode (`init` or `sidecar`)                  |  `nil` (only applies to authenticator) |
-| `conjur.org/container-name` | Sidecar Container name                  |  `nil` (only applies to authenticator)                              |
-| `conjur.org/container-image` | Sidecar Container image      | defaults to the value configured for the sidecar-injector at startup, using the `-secretless-image` or `-authenticator-image` CLI arguments. |
+| `conjur.org/container-mode` | Sidecar Container mode (`init` or `sidecar`)                  | (secretless only supports sidecar) defaults to `sidecar` |
+| `conjur.org/container-name` | Sidecar Container name                  |  `nil` (only applies to authenticator and secrets-provider)                              |
+| `conjur.org/container-image` | Sidecar Container image      | defaults to the value configured for the sidecar-injector at startup, using the `-secretless-image` or `-authenticator-image` or `-secrets-provider` CLI arguments. |
 
 #### conjur.org/secretless-config
 

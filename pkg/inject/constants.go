@@ -12,4 +12,18 @@ const (
 	annotationSecretlessCRDSuffixKey  = "conjur.org/secretless-CRD-suffix"
 	annotationStatusKey               = "conjur.org/status"
 	annotationContainerImageKey       = "conjur.org/container-image"
+	annotationSecretsDestinationKey   = "conjur.org/secrets-destination"
 )
+// These annotations are only used for sidecar injector and not passed on to the
+// injected container
+var sidecarInjectorAnnot = []string {
+	annotationConjurAuthConfigKey,
+	annotationConjurConnConfigKey,
+	annotationContainerNameKey,
+	annotationConjurTokenReceiversKey,
+	annotationInjectKey,
+	annotationInjectTypeKey,
+	annotationSecretlessConfigKey,
+	annotationSecretlessCRDSuffixKey,
+	annotationContainerImageKey,
+}

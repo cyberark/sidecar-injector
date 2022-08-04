@@ -19,6 +19,10 @@ The following flags are available to configure the sidecar-injector deployment. 
 
        --authenticator-image       Container image for the Kubernetes Authenticator sidecar.
 
+       --secrets-provider-image    Container image for the Secrets Provider sidecar.
+
+       --secrets-provider          Option to use secrets provider and use the conjur-connect config map
+
 EOF
     exit 1
 }
@@ -56,6 +60,16 @@ while [[ $# -gt 0 ]]; do
             authenticatorImageArg="- -authenticator-image=${2}"
             shift
             ;;
+        --secrets-provider-image)
+            usage_if_empty "$2"
+            secretsProviderImageArg="- -secrets-provider-image=${2}"
+            shift
+            ;;
+        --secrets-provider)
+            secretsProvider="envFrom:
+          - configMapRef:
+              name: conjur-connect"
+            ;;
         *)
             usage
             ;;
@@ -90,9 +104,11 @@ spec:
             - -port=8080
             ${authenticatorImageArg}
             ${secretlessImageArg}
+            ${secretsProviderImageArg}
           ports:
             - containerPort: 8080
               name: https
+          ${secretsProvider}
           volumeMounts:
             - name: certs
               mountPath: /etc/webhook/certs
