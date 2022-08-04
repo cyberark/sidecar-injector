@@ -121,13 +121,14 @@ Injects:
   + **Volume Mounts** at `/conjur/secrets` and `/conjur/podinfo`
 
 Requires:
-  + a conjur-connect configMap in the namespace that the sidecar resides in.
-  + The sidecar deployment manifest must include the conjur-connect configmap
+  + a configMap in the namespace that the sidecar resides in. The config map can be the Golden config or the Conjur connect config map.
+  + The sidecar deployment manifest must include the conjur-connect configmap or the Golden configmap
 
+For example to add the Golden config to the sidecar manifest:
 ```
     envFrom:
       - configMapRef:
-          name: conjur-connect
+          name: conjur-configmap
 ```
 
 ### Mandatory TLS
