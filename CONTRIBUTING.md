@@ -14,3 +14,9 @@ For general contribution and community guidelines, please see the [community rep
 From here your pull request will be reviewed and once you've responded to all
 feedback it will be merged into the project. Congratulations, you're a
 contributor!
+
+## Generate the Helm package
+
+1. Build the package tgz ( run `helm package` from the helm directory).
+2. Copy that tgz to a local helm-charts repo
+3. Follow instructions [here](https://github.com/cyberark/helm-charts/blob/main/CONTRIBUTING.md)

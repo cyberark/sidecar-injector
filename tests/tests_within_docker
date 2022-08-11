@@ -231,9 +231,14 @@ function deploy_injector() {
 
     kubectl create namespace "${I_NAMESPACE}"
 
+    # Will determine if the conjur-configmap is a requirement for all sidecars
+    # Currently only needed for Secrets Provider so adding a dummy config for the others
+    echo ">>--- Create config map"
+    kubectl create configmap conjur-configmap --namespace "${I_NAMESPACE}" --from-literal=authnK8sAuthenticatorID=my-authenticator-id
+
     echo ">>--- Deploy sidecar injection helm chart"
 
-    helm install "${HELM_DEPLOYMENT}" charts/cyberark-sidecar-injector \
+    helm install "${HELM_DEPLOYMENT}" helm/cyberark-sidecar-injector \
         --namespace "${I_NAMESPACE}" \
         --set "namespaceSelectorLabel=cyberark-sidecar-injector-${I_NAMESPACE}" \
         --set "deploymentApiVersion=apps/v1" \
