@@ -12,9 +12,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Add support for selection of sidecar container versions
   [cyberark/sidecar-injector#71](https://github.com/cyberark/sidecar-injector/pull/71)
 - Add ability to set (and override default) deployment resource `apiVersion` in manifests.
-    [#27](https://github.com/cyberark/sidecar-injector/pull/27)
-- Add support for secrets-provider-for-k8s
-  [cyberark/sidecar-injector#72](https://github.com/cyberark/sidecar-injector/pull/72)
+    [cyberark/sidecar-injector#27](https://github.com/cyberark/sidecar-injector/pull/27)
+- Add support for secrets-provider-for-k8s<br>
+  [cyberark/sidecar-injector#72](https://github.com/cyberark/sidecar-injector/pull/72) <br>
+  [cyberark/sidecar-injector#73](https://github.com/cyberark/sidecar-injector/pull/73) <br>
 
 ### Changed
 - Dropped support for Helm V2 and converted to Helm V3.

@@ -6,30 +6,54 @@ import (
 )
 
 type SecretsProviderSidecarConfig struct {
-	containerMode           string
-	containerName           string
-	sidecarImage            string
-	secretsDestination      string
+	containerMode      string
+	containerName      string
+	sidecarImage       string
+	secretsDestination string
 }
-var validEnvVars = []string{
+
+var conjurEnvVars = []string{
 	"CONJUR_ACCOUNT",
+	"conjurAccount",
 	"CONJUR_APPLIANCE_URL",
+	"conjurApplianceUrl",
 	"CONJUR_AUTHENTICATOR_ID",
+	"authnK8sAuthenticatorID",
 	"CONJUR_AUTHN_URL",
 	"CONJUR_SSL_CERTIFICATE",
+	"conjurSslCertificate",
+}
+
+func getConjurAuthnURL(envVars map[string]string) string {
+
+	authnMethod := "authn-k8s"
+	// If "CONJUR_AUTHN_URL" is explicitly set, use it
+	if envVars["CONJUR_AUTHN_URL"] != "" {
+		return envVars["CONJUR_AUTHN_URL"]
+	}
+	return envVars["conjurApplianceUrl"] + "/" + authnMethod + "/" +
+		envVars["authnK8sAuthenticatorID"]
+}
+func getConjurEnv(envVars map[string]string, primary string,
+	secondary string) string {
+
+	if envVars[primary] != "" {
+		return envVars[primary]
+	}
+	return envVars[secondary]
 }
 
 // generateSecretsProviderSidecarConfig generates PatchConfig from a
 // given SecretsProviderSidecarConfig
 func generateSecretsProviderSidecarConfig(
 	cfg SecretsProviderSidecarConfig,
-    ) *PatchConfig {
+) *PatchConfig {
 	var containers, initContainers []corev1.Container
-	masterMap := make(map[string]string)
-	for _, envVar := range validEnvVars {
+	envVars := make(map[string]string)
+	for _, envVar := range conjurEnvVars {
 		value := os.Getenv(envVar)
 		if value != "" {
-			masterMap[envVar] = value
+			envVars[envVar] = value
 		}
 	}
 
@@ -51,13 +75,13 @@ func generateSecretsProviderSidecarConfig(
 			ReadOnly:  false,
 			MountPath: "/conjur/secrets",
 		}
-		volumeMounts = append(volumeMounts,volumeMount)
+		volumeMounts = append(volumeMounts, volumeMount)
 	}
 	container := corev1.Container{
 		Name:            cfg.containerName,
 		Image:           cfg.sidecarImage,
 		ImagePullPolicy: "Always",
-		VolumeMounts: volumeMounts,
+		VolumeMounts:    volumeMounts,
 		Env: []corev1.EnvVar{
 			envVarFromFieldPath(
 				"MY_POD_NAME",
@@ -69,23 +93,23 @@ func generateSecretsProviderSidecarConfig(
 			),
 			envVarFromLiteral(
 				"CONJUR_ACCOUNT",
-				masterMap["CONJUR_ACCOUNT"],
+				getConjurEnv(envVars, "CONJUR_ACCOUNT", "conjurAccount"),
 			),
 			envVarFromLiteral(
 				"CONJUR_APPLIANCE_URL",
-				masterMap["CONJUR_APPLIANCE_URL"],
+				getConjurEnv(envVars, "CONJUR_APPLIANCE_URL", "conjurApplianceUrl"),
 			),
 			envVarFromLiteral(
 				"CONJUR_AUTHENTICATOR_ID",
-				masterMap["CONJUR_AUTHENTICATOR_ID"],
+				getConjurEnv(envVars, "CONJUR_AUTHENTICATOR_ID", "authnK8sAuthenticatorID"),
 			),
 			envVarFromLiteral(
 				"CONJUR_AUTHN_URL",
-				masterMap["CONJUR_AUTHN_URL"],
+				getConjurAuthnURL(envVars),
 			),
 			envVarFromLiteral(
 				"CONJUR_SSL_CERTIFICATE",
-				masterMap["CONJUR_SSL_CERTIFICATE"],
+				getConjurEnv(envVars, "CONJUR_SSL_CERTIFICATE", "conjurSslCertificate"),
 			),
 		},
 	}
@@ -101,13 +125,12 @@ func generateSecretsProviderSidecarConfig(
 	return &PatchConfig{
 		Containers:     containers,
 		InitContainers: initContainers,
-		Volumes: volumes,
+		Volumes:        volumes,
 	}
 }
 
-func getSPVolumes( secretsDest string ) []corev1.Volume {
+func getSPVolumes(secretsDest string) []corev1.Volume {
 
-	//var vol []corev1.Volume
 	var volume corev1.Volume
 
 	volumes := []corev1.Volume{
@@ -141,7 +164,6 @@ func getSPVolumes( secretsDest string ) []corev1.Volume {
 			VolumeSource: corev1.VolumeSource{
 				EmptyDir: &corev1.EmptyDirVolumeSource{
 					Medium: "Memory",
-
 				},
 			},
 		}
@@ -149,4 +171,3 @@ func getSPVolumes( secretsDest string ) []corev1.Volume {
 	}
 	return volumes
 }
-
