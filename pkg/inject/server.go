@@ -115,13 +115,13 @@ func HandleAdmissionRequest(
 	injectType, err := getAnnotation(&pod.ObjectMeta, annotationInjectTypeKey)
 	containerMode, err := getAnnotation(&pod.ObjectMeta, annotationContainerModeKey)
 	containerName, err := getAnnotation(&pod.ObjectMeta, annotationContainerNameKey)
-	conjurTokenReceiversStr, err := getAnnotation(
+	conjurInjectVolumeStr, err := getAnnotation(
 		&pod.ObjectMeta,
-		annotationConjurTokenReceiversKey,
+		annotationConjurInjectVolumesKey,
 	)
-	conjurTokenReceivers := strings.Split(conjurTokenReceiversStr, ",")
-	for i := range conjurTokenReceivers {
-		conjurTokenReceivers[i] = strings.TrimSpace(conjurTokenReceivers[i])
+	conjurInjectVolume := strings.Split(conjurInjectVolumeStr, ",")
+	for i := range conjurInjectVolume {
+		conjurInjectVolume[i] = strings.TrimSpace(conjurInjectVolume[i])
 	}
 	var sidecarConfig *PatchConfig
 	annotations := make(map[string]string)
@@ -251,7 +251,7 @@ func HandleAdmissionRequest(
 		})
 
 		containerVolumeMounts := ContainerVolumeMounts{}
-		for _, receiveContainerName := range conjurTokenReceivers {
+		for _, receiveContainerName := range conjurInjectVolume {
 			containerVolumeMounts[receiveContainerName] = []corev1.VolumeMount{
 				{
 					Name:      "conjur-access-token",
@@ -299,12 +299,8 @@ func HandleAdmissionRequest(
 			},
 		)
 		containerVolumeMounts := ContainerVolumeMounts{}
-		// Here we are using the "conjur.org/conjur-token-receivers" annotation
-		// We need to either
-		// a - rename this annotation to a common name
-		// b - add a similar annotation for Secrets Provider
-		// c - add the volume mount to all containers
-		for _, receiveContainerName := range conjurTokenReceivers {
+
+		for _, receiveContainerName := range conjurInjectVolume {
 			containerVolumeMounts[receiveContainerName] = []corev1.VolumeMount{
 				{
 					Name:      "conjur-status",

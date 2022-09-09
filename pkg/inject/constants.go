@@ -5,7 +5,7 @@ const (
 	annotationConjurConnConfigKey     = "conjur.org/conjurConnConfig"
 	annotationContainerNameKey        = "conjur.org/container-name"
 	annotationContainerModeKey        = "conjur.org/container-mode"
-	annotationConjurTokenReceiversKey = "conjur.org/conjur-token-receivers"
+	annotationConjurInjectVolumesKey = "conjur.org/conjur-inject-volumes"
 	annotationInjectKey               = "conjur.org/inject"
 	annotationInjectTypeKey           = "conjur.org/inject-type"
 	annotationSecretlessConfigKey     = "conjur.org/secretless-config"
@@ -20,7 +20,7 @@ var sidecarInjectorAnnot = []string {
 	annotationConjurAuthConfigKey,
 	annotationConjurConnConfigKey,
 	annotationContainerNameKey,
-	annotationConjurTokenReceiversKey,
+	annotationConjurInjectVolumesKey,
 	annotationInjectKey,
 	annotationInjectTypeKey,
 	annotationSecretlessConfigKey,
