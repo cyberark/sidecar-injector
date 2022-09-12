@@ -20,7 +20,7 @@ $ helm install -f values.yaml my-release .
 
 ## Introduction
 
-This chart bootstraps a deployment of a CyberArk Broker Sidecar Injector MutatingAdmissionWebhook server including the Service and MutatingWebhookConfiguration. 
+This chart bootstraps a deployment of a CyberArk Sidecar Injector MutatingAdmissionWebhook server including the Service and MutatingWebhookConfiguration. 
 
 ## Prerequisites
 
@@ -41,7 +41,7 @@ $ helm install \
     extension-apiserver-authentication \
     -o=jsonpath='{.data.client-ca-file}' \
   )" \
-  my-release \
+  my-release \ --generate-name
   .
 ```
 
@@ -55,13 +55,13 @@ You will need to approve the CSR (Certificate Signing Request) made by the sidec
 This allows the sidecar-injector to communicate securely with the Kubernetes API.
 
 ### Watch initContainer logs for when CSR is created
-kubectl -n injectors logs deployment/vigilant-numbat-cyberark-sidecar-injector -c init-webhook -f
+kubectl -n injectors logs deployment/cyberark-sidecar-injector -c init-webhook -f
 
 ### You can check and inspect the CSR
-kubectl describe csr "vigilant-numbat-cyberark-sidecar-injector.injectors"
+kubectl describe csr "cyberark-sidecar-injector.injectors"
 
 ### Approve the CSR
-kubectl certificate approve "vigilant-numbat-cyberark-sidecar-injector.injectors"
+kubectl certificate approve "cyberark-sidecar-injector.injectors"
 
 Now that everything is setup you can enjoy the Cyberark Sidecar Injector.
 This is the general workflow:
@@ -100,6 +100,7 @@ The following table lists the configurable parameters of the CyberArk Sidecar In
 | `sidecarInjectorImage` | Container image for the sidecar injector. | `cyberark/sidecar-injector:latest` |
 | `secretlessImage` | Container image for the Secretless sidecar. | `cyberark/secretless-broker:latest` |
 | `authenticatorImage` | Container image for the Kubernetes Authenticator sidecar. | `cyberark/conjur-kubernetes-authenticator:latest` |
+| `secretsProviderImage` | Container image for the Secrets Provider sidecar. | `cyberark/secrets-provider-for-k8s:latest` |
 | `deploymentApiVersion` | The supported apiVersion for Deployments. This is the value that will be set in the Deployment manifest. It defaults to the supported apiVersion for Deployments on the latest Kubernetes release. | `apps/v1` |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
@@ -158,6 +159,10 @@ kubectl -n kube-system \
 ### authenticatorImage
 
 `authenticatorImage` is the container image for the Kubernetes Authenticator sidecar.
+
+### secretsProviderImage
+
+`secretsProviderImage` is the container image for the Secrets Provider sidecar.
 
 ### deploymentApiVersion
 

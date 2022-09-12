@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Add support for secrets-provider-for-k8s<br>
   [cyberark/sidecar-injector#72](https://github.com/cyberark/sidecar-injector/pull/72) <br>
   [cyberark/sidecar-injector#73](https://github.com/cyberark/sidecar-injector/pull/73) <br>
+  [cyberark/sidecar-injector#74](https://github.com/cyberark/sidecar-injector/pull/74) <br>
 
 ### Changed
 - Dropped support for Helm V2 and converted to Helm V3.

@@ -69,10 +69,10 @@ spec:
               kubectl api-versions | grep rbac.authorization.k8s.io
               kubectl api-versions | grep admissionregistration.k8s.io
 
-              csrAPIVersion="$(kubectl api-resources \
+              csrAPIResources="$(kubectl api-resources \
                              | grep CertificateSigningRequest \
                              | head -1 | awk '{print $3}')"
-
+              csrAPIVersion="$(kubectl api-versions | grep "${csrAPIResources}" | head -n 1)"
               echo "Creating server cert/key CSR and sending to k8s API controller"
               cat <<EOF | kubectl create -f -
               apiVersion: ${csrAPIVersion}
@@ -139,9 +139,13 @@ spec:
             - -port=8080
             - -secretless-image={{ .Values.secretlessImage }}
             - -authenticator-image={{ .Values.authenticatorImage }}
+            - -secrets-provider-image={{ .Values.secretsProviderImage }}
           env:
             - name: SECRETLESS_CRD_SUFFIX
               value: "{{ .Values.SECRETLESS_CRD_SUFFIX }}"
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.conjurConfig }}
           ports:
             - containerPort: 8080
               name: https

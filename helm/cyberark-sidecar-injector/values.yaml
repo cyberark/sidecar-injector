@@ -17,9 +17,11 @@ namespaceSelectorLabel: cyberark-sidecar-injector
 
 secretlessImage: cyberark/secretless-broker:latest
 authenticatorImage: cyberark/conjur-kubernetes-authenticator:latest
+secretsProviderImage: cyberark/secrets-provider-for-k8s:latest
 
 sidecarInjectorImage: cyberark/sidecar-injector:latest
 SECRETLESS_CRD_SUFFIX: ""
+conjurConfig: conjur-configmap
 
 # deploymentApiVersion is the supported apiVersion for Deployments. This is the value that
 # will be set in the Deployment manifest.

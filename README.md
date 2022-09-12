@@ -261,11 +261,11 @@ helm --namespace injectors \
    extension-apiserver-authentication \
    -o=jsonpath='{.data.client-ca-file}' \
  )" \
- ./charts/cyberark-sidecar-injector/
+ ./helm/cyberark-sidecar-injector/  --generate-name
 ```
 
-Optionally, if you want to specify the Secretless and/or Conjur Authenticator Docker
-image references, you can specify this in the `helm install` command:
+Optionally, if you want to specify the Secretless, Conjur Authenticator and/or 
+Secrets Provider Docker image references, you can specify this in the `helm install` command:
 ```
 helm --namespace injectors \
  install \
@@ -277,7 +277,8 @@ helm --namespace injectors \
   )" \
  --set secretlessImage=path/to/secretless/container/image/repo/and/tag" \
  --set authenticatorImage=path/to/authenticator/container/image/repo/and/tag" \
- ./charts/cyberark-sidecar-injector/
+ --set secretsProviderImage=path/to/secretsProvider/container/image/repo/and/tag" \
+ ./helm/cyberark-sidecar-injector/  --generate-name
 ```
 
 Below is example output from the `helm install` command:
@@ -292,14 +293,14 @@ sidecar-injector.
 This allows the sidecar-injector to communicate securely with the Kubernetes API.
 
 ### Watch initContainer logs for when CSR is created
-kubectl -n injectors logs deployment/vigilant-numbat-cyberark-sidecar-injector -c
+kubectl -n injectors logs deployment/cyberark-sidecar-injector -c
 init-webhook -f
 
 ### You can check and inspect the CSR
-kubectl describe csr "vigilant-numbat-cyberark-sidecar-injector.injectors"
+kubectl describe csr "cyberark-sidecar-injector.injectors"
 
 ### Approve the CSR
-kubectl certificate approve "vigilant-numbat-cyberark-sidecar-injector.injectors"
+kubectl certificate approve "cyberark-sidecar-injector.injectors"
 
 Now that everything is setup you can enjoy the Cyberark Sidecar Injector.
 This is the general workflow:
