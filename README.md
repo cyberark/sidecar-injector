@@ -342,7 +342,7 @@ default values.
 | `conjur.org/conjurAuthConfig` | ConfigMap holding Conjur authentication configuration            |  `nil` (required for authenticator |
 | `conjur.org/conjurConnConfig` | ConfigMap holding Conjur connection configuration               |  `nil` (required for authenticator |
 | `conjur.org/inject-type` | Injected Sidecar type (`secretless`, `authenticator` or `secrets-provider`)                    |  `nil` (required) |
-| `conjur.org/conjur-token-receivers` | Comma-separated list of the names of containers, in the pod, that will be injected with `conjur-access-token` VolumeMounts. (e.g. `app-container-1,app-container-2`)                  |  `nil` (only applies to authenticator) |
+| `conjur.org/conjur-inject-volumes` | Comma-separated list of the names of containers, in the pod, that will be injected with `conjur-access-token` or `conjur-secrets` and `conjur-status` VolumeMounts. (e.g. `app-container-1,app-container-2`)                  |  `nil` (applies to authenticator and secrets provider) |
 | `conjur.org/container-mode` | Sidecar Container mode (`init` or `sidecar`)                  | (secretless only supports sidecar) defaults to `sidecar` |
 | `conjur.org/container-name` | Sidecar Container name                  |  `nil` (only applies to authenticator and secrets-provider)                              |
 | `conjur.org/container-image` | Sidecar Container image      | defaults to the value configured for the sidecar-injector at startup, using the `-secretless-image` or `-authenticator-image` or `-secrets-provider` CLI arguments. |

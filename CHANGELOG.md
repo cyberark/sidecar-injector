@@ -30,6 +30,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   All user manifests must be changed to use the new annotations. [cyberark/sidecar-injector#70](https://github.com/cyberark/sidecar-injector/pull/70)
 - Deployment resource `apiVersion` (in manifests) changed from `extensions/v1beta1` to
   `apps/v1`. [#47](https://github.com/cyberark/sidecar-injector/pull/47)
+- BREAKING CHANGE: Changed annotation `conjur-token-receivers` to `conjur-inject-volumes` for compatability
+  with Secrets Provider [cyberark/sidecar-injector#76](https://github.com/cyberark/sidecar-injector/pull/76)
 
 ### Security
 - Added replace statements to go.mod to remove vulnerable dependency versions from the dependency tree

@@ -9,7 +9,7 @@
       "conjur.org/conjurAuthConfig": "conjur",
       "conjur.org/conjurConnConfig": "conjur",
       "conjur.org/container-mode": "sidecar",
-      "conjur.org/conjur-token-receivers": "nginx-2",
+      "conjur.org/conjur-inject-volumes": "nginx-2",
       "conjur.org/inject": "true",
       "conjur.org/inject-type": "authenticator",
       "conjur.org/container-name": "authenticator-name",
