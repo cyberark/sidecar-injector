@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   [cyberark/sidecar-injector#74](https://github.com/cyberark/sidecar-injector/pull/74) <br>
 
 ### Changed
+- Upgrade testify to 1.8.0 and k8s to 0.25.2
+  [cyberark/sidecar-injector#77](https://github.com/cyberark/sidecar-injector/pull/78)
 - Upgrade Go to 1.19
   [cyberark/sidecar-injector#78](https://github.com/cyberark/sidecar-injector/pull/78)
 - Dropped support for Helm V2 and converted to Helm V3.
@@ -36,6 +38,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   with Secrets Provider [cyberark/sidecar-injector#76](https://github.com/cyberark/sidecar-injector/pull/76)
 
 ### Security
+- Updated replace statements to force golang.org/x/net v0.0.0-20220923203811-8be639271d50
+   and updated testify to 1.8.0 [cyberark/sidecar-injector#77](https://github.com/cyberark/sidecar-injector/pull/78)
 - Added replace statements to go.mod to remove vulnerable dependency versions from the dependency tree
   [cyberark/sidecar-injector#68](https://github.com/cyberark/sidecar-injector/pull/68)
   [cyberark/sidecar-injector#69](https://github.com/cyberark/sidecar-injector/pull/69)
