@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/evanphx/json-patch v5.6.0+incompatible
-	github.com/stretchr/testify v1.7.2
+	github.com/stretchr/testify v1.8.0
 	k8s.io/api v0.24.1
 	k8s.io/apimachinery v0.24.1
 )
