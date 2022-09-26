@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [0.2.0] - 2022-08-02
+## [0.2.0] - 2022-09-26
 
 ### Added
 - Add support for selection of sidecar container versions
@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   [cyberark/sidecar-injector#74](https://github.com/cyberark/sidecar-injector/pull/74) <br>
 
 ### Changed
+- Upgrade Go to 1.19
+  [cyberark/sidecar-injector#78](https://github.com/cyberark/sidecar-injector/pull/78)
 - Dropped support for Helm V2 and converted to Helm V3.
   [cyberark/sidecar-injector#60](https://github.com/cyberark/sidecar-injector/pull/60)
 - K8s APIs used for mutating webhook request/response messages are upgraded
