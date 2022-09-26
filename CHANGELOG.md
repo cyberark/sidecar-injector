@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [0.2.0] - 2022-08-02
+## [0.2.0] - 2022-09-26
 
 ### Added
 - Add support for selection of sidecar container versions
@@ -34,6 +34,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   with Secrets Provider [cyberark/sidecar-injector#76](https://github.com/cyberark/sidecar-injector/pull/76)
 
 ### Security
+- Updated replace statements to force golang.org/x/net v0.0.0-20220923203811-8be639271d50
+  and updated testify to 1.8.0 [cyberark/sidecar-injector#77](https://github.com/cyberark/sidecar-injector/pull/77)
 - Added replace statements to go.mod to remove vulnerable dependency versions from the dependency tree
   [cyberark/sidecar-injector#68](https://github.com/cyberark/sidecar-injector/pull/68)
   [cyberark/sidecar-injector#69](https://github.com/cyberark/sidecar-injector/pull/69)
