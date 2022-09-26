@@ -1,12 +1,12 @@
 module github.com/cyberark/sidecar-injector
 
-go 1.19
+go 1.18
 
 require (
 	github.com/evanphx/json-patch v5.6.0+incompatible
 	github.com/stretchr/testify v1.8.0
-	k8s.io/api v0.24.1
-	k8s.io/apimachinery v0.24.1
+	k8s.io/api v0.25.2
+	k8s.io/apimachinery v0.25.2
 )
 
 require (
