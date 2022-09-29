@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   [cyberark/sidecar-injector#72](https://github.com/cyberark/sidecar-injector/pull/72) <br>
   [cyberark/sidecar-injector#73](https://github.com/cyberark/sidecar-injector/pull/73) <br>
   [cyberark/sidecar-injector#74](https://github.com/cyberark/sidecar-injector/pull/74) <br>
+  [cyberark/sidecar-injector#79](https://github.com/cyberark/sidecar-injector/pull/79) <br>
 
 ### Changed
 - Upgrade testify to 1.8.0 and k8s to 0.25.2
