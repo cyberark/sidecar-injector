@@ -38,6 +38,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   with Secrets Provider [cyberark/sidecar-injector#76](https://github.com/cyberark/sidecar-injector/pull/76)
 
 ### Security
+- Added replace statement for golang.org/x/crypto@v0.0.0-20210921155107-089bfa567519
+  [cyberark/sidecar-injector#80](https://github.com/cyberark/sidecar-injector/pull/80)
 - Updated replace statements to force golang.org/x/net v0.0.0-20220923203811-8be639271d50
    and updated testify to 1.8.0 [cyberark/sidecar-injector#78](https://github.com/cyberark/sidecar-injector/pull/78)
 - Added replace statements to go.mod to remove vulnerable dependency versions from the dependency tree
