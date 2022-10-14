@@ -56,7 +56,7 @@ object.
       - [conjur.org/conjurConnConfig](#conjurorgconjurconnconfig)
       - [conjur.org/conjurAuthConfig](#conjurorgconjurauthconfig)
   * [Secretless Sidecar Injection Example](#secretless-sidecar-injection-example)
-  * [Conjur Authenticator/Secretless Sidecar Injection Example](#conjur-authenticatorsecretless-sidecar-injection-example)
+  * [Conjur Authenticator/Secretless/Secrets Provider Sidecar Injection Example](#conjur-authenticatorsecretless-sidecarsecrets-provider-injection-example)
     + [Deploy Authenticator Sidecar](#deploy-authenticator-sidecar)
     + [Deploy Secretless Sidecar](#deploy-secretless-sidecar)
   * [License](#license)
@@ -515,7 +515,7 @@ to allow the cyberark-sidecar-injector to operate on pods created in this namesp
     ```
     
 
-## Conjur Authenticator/Secretless Sidecar Injection Example
+## Conjur Authenticator/Secretless Sidecar/Secrets Provider Injection Example
 
 For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (see
 below). Later you will label this namespace with `cyberark-sidecar-injector=enabled` so as
@@ -631,13 +631,14 @@ communicate with the Conjur appliance.
 
 1. You can now leverage Conjur by either
    1. [Deploying the Authenticator Sidecar](#deploy-authenticator-sidecar) or
-   1. [Deploying the Secretless Sidecar](#deploy-secretless-sidecar) 
+   2. [Deploying the Secretless Sidecar](#deploy-secretless-sidecar) or
+   3. [Deploying the Secrets Provider Sidecar](#deploy-secrets-provider-sidecar)
 
 ### Deploy Authenticator Sidecar
 
 1. Deploy an app with the Authenticator Sidecar:
     
-    The **Secretless Sidecar** is injected into the application pod on pod creation via the
+    The **Authenticator Sidecar** is injected into the application pod on pod creation via the
 sidecar injector. The injection is configured via annotations. 
     
     + The `conjur` ConfigMap is used for both Conjur Authentication and Connection configuration
@@ -817,6 +818,84 @@ be named secretless.
     ```
     "test_app:84674b2874a5d7c952e7fec8"
     ```
+   
+### Deploy Secrets Provider Sidecar
+
+1. Deploy an app with the Secrets Provider Sidecar:
+
+   The **Secrets Provider Sidecar** is injected into the application pod on pod creation via the
+   sidecar injector. The injection is configured via annotations.
+
+ + The `conjur.org/container-name` is set to "cyberark-secrets-provider-for-k8s".
+
+    ```bash
+    ~$ kubectl -n ${TEST_APP_NAMESPACE_NAME} \
+      delete pod \
+      test-app --ignore-not-found
+   
+    ~$ cat << EOF | kubectl -n ${TEST_APP_NAMESPACE_NAME} apply -f -
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      annotations:
+        conjur.org/inject: "true"
+        conjur.org/inject-type: "secrets-provider"
+        conjur.org/container-name: "cyberark-secrets-provider-for-k8s"
+        conjur.org/container-image: "docker.io/cyberark/secrets-provider-for-k8s:edge"
+        conjur.org/conjur-token-receivers: "test-app"
+        conjur.org/authn-identity: host/conjur/authn-k8s/my-authenticator-id/apps/test-app-secrets-provider-p2f
+        conjur.org/container-mode: init
+        conjur.org/secrets-destination: file
+        conjur.org/conjur-secrets.test-app: |
+          - admin-username: username
+          - admin-password: password
+        conjur.org/conjur-secrets-policy-path.test-app: test-secrets-provider-p2f-app-db/
+        conjur.org/secret-file-path.test-app: "./application.yaml"
+        conjur.org/secret-file-format.test-app: "yaml"
+      labels:
+        app: test-app
+      name: test-app
+    spec:
+      containers:
+      - image: googlecontainer/echoserver:1.1
+        name: app
+      serviceAccountName: ${TEST_APP_SERVICE_ACCOUNT}
+    EOF
+    ```
+
+1. Verify Authenticator sidecar container injected
+    ```bash
+    ~$ kubectl -n ${TEST_APP_NAMESPACE_NAME} get pods
+    ```
+    ```
+    NAME                     READY     STATUS        RESTARTS   AGE
+    test-app                 2/2       Running       0          1m
+    ```
+
+1. Test Secrets Provider
+
+   In this step, you test the Secrets Provider by `exec`ing into the application pod's main
+   container and read the file `/conjur/secrets/application.yaml`.
+
+   The `/conjur/secrets/application.yaml` file contains the secrets that are injected by the
+   **Secrets Provider** sidecar upon successful authentication against the Conjur appliance.
+   Note that this file is volume mounted into the application pod's main container as a
+   result of the annotation `conjur.org/conjur-inject-volumes` being
+   set to that container's name.
+
+    ```bash
+    ~$ kubectl -n ${TEST_APP_NAMESPACE_NAME} \
+      exec test-app \
+      -c app \
+      -i \
+      -- \
+      cat /conjur/secrets/application.yaml
+    ```
+    ```
+    "admin-username": "test_app"
+    "admin-password": "9622c67ebd1f5fa94ef114da"
+    ```
+
 
 ## Contributing
 
