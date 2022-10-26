@@ -79,15 +79,17 @@ replace golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4 => golang.org/x/net 
 
 replace golang.org/x/net v0.0.0-20220722155237-a158d28d115b => golang.org/x/net v0.0.0-20220923203811-8be639271d50
 
-replace golang.org/x/text v0.3.0 => golang.org/x/text v0.3.7
+replace golang.org/x/text v0.3.0 => golang.org/x/text v0.3.8
 
-replace golang.org/x/text v0.3.2 => golang.org/x/text v0.3.7
+replace golang.org/x/text v0.3.2 => golang.org/x/text v0.3.8
 
-replace golang.org/x/text v0.3.3 => golang.org/x/text v0.3.7
+replace golang.org/x/text v0.3.3 => golang.org/x/text v0.3.8
 
-replace golang.org/x/text v0.3.5 => golang.org/x/text v0.3.7
+replace golang.org/x/text v0.3.5 => golang.org/x/text v0.3.8
 
-replace golang.org/x/text v0.3.6 => golang.org/x/text v0.3.7
+replace golang.org/x/text v0.3.6 => golang.org/x/text v0.3.8
+
+replace golang.org/x/text v0.3.7 => golang.org/x/text v0.3.8
 
 replace github.com/emicklei/go-restful v0.0.0-20170410110728-ff4f55a20633 => github.com/emicklei/go-restful/v3 v3.8.0
 
