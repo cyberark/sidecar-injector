@@ -347,26 +347,26 @@ three phases of development:
 
 | Description | Jira Story | Estimated<br />Story<br />Points<br /> | Completed |
 |-------------|------------|-----------|-----------|
-| Annotations Made Consistent with Secrets Provider Annotations |[ONYX-19422](https://ca-il-jira.il.cyber-ark.com:8443/browse/ONYX-19422)|||
-| Simplification of Application Namespace Prep |[ONYX-19423](https://ca-il-jira.il.cyber-ark.com:8443/browse/ONYX-19423)|||
-| Support for Secrets Provider Container |[ONYX-19424](https://ca-il-jira.il.cyber-ark.com:8443/browse/ONYX-19424)|||
-| Support for Selection of Sidecar Container Versions |[ONYX-19425](https://ca-il-jira.il.cyber-ark.com:8443/browse/ONYX-19425)|||
-| Simplification of Application Namespace Prep - rolebinding |[ONYX-19489](https://ca-il-jira.il.cyber-ark.com:8443/browse/ONYX-19489)|||
-| Create documentation for tech writers |[ONYX-20482](https://ca-il-jira.il.cyber-ark.com:8443/browse/ONYX-20482)|||
-| Add e2e testing via conjur-authn-k8s-client|[ONYX-21139](https://ca-il-jira.il.cyber-ark.com:8443/browse/ONYX-21139)|||
+| Annotations Made Consistent with Secrets Provider Annotations |ONYX-19422|||
+| Simplification of Application Namespace Prep |ONYX-19423|||
+| Support for Secrets Provider Container |ONYX-19424|||
+| Support for Selection of Sidecar Container Versions |ONYX-19425|||
+| Simplification of Application Namespace Prep - rolebinding |ONYX-19489|||
+| Create documentation for tech writers |ONYX-20482|||
+| Add e2e testing via conjur-authn-k8s-client|ONYX-21139|||
 ### Development Tasks: Full-Featured GA Release
 
 | Description | Jira Story | Estimated<br />Story<br />Points<br /> | Completed |
 |-------------|------------|-----------|-----------|
-| OpenTelemetry Tracing support |[ONYX-19426](https://ca-il-jira.il.cyber-ark.com:8443/browse/ONYX-19426)|||
-| UT coverage improvements |[ONYX-19427](https://ca-il-jira.il.cyber-ark.com:8443/browse/ONYX-19427)|||
-| Sidecar Injector image with Go test coverage |[ONYX-19435](https://ca-il-jira.il.cyber-ark.com:8443/browse/ONYX-19435)|||
-| New CI testing |[ONYX-19436](https://ca-il-jira.il.cyber-ark.com:8443/browse/ONYX-19436)|||
-| [INVESTIGATION SPIKE] Use Kubernetes cert-manager to Simplify Signing of CSR |[ONYX-19428](https://ca-il-jira.il.cyber-ark.com:8443/browse/ONYX-19428)|||
-| Helm Chart Unit/Schema testing |[ONYX-19437](https://ca-il-jira.il.cyber-ark.com:8443/browse/ONYX-19437)|||
-| Helm chart test |[ONYX-19438](https://ca-il-jira.il.cyber-ark.com:8443/browse/ONYX-19438)|||
-| Add Test Level/Area Tags to Support Improve Dev Feedback - Sidecar-injector |[ONYX-19485](https://ca-il-jira.il.cyber-ark.com:8443/browse/ONYX-19485)|||
-| Manual UX check on public docs|[ONYX-20481](https://ca-il-jira.il.cyber-ark.com:8443/browse/ONYX-20481)|||
+| OpenTelemetry Tracing support |ONYX-19426|||
+| UT coverage improvements |ONYX-19427|||
+| Sidecar Injector image with Go test coverage |ONYX-19435|||
+| New CI testing |ONYX-19436|||
+| [INVESTIGATION SPIKE] Use Kubernetes cert-manager to Simplify Signing of CSR |ONYX-19428|||
+| Helm Chart Unit/Schema testing |ONYX-19437|||
+| Helm chart test |ONYX-19438|||
+| Add Test Level/Area Tags to Support Improve Dev Feedback - Sidecar-injector |ONYX-19485|||
+| Manual UX check on public docs|ONYX-20481|||
 
 ### Development Tasks: Future
 
