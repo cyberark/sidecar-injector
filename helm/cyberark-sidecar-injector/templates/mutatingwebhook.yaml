@@ -19,7 +19,7 @@ webhooks:
       - operations: [ "CREATE" ]
         apiGroups: [""]
         apiVersions: ["v1"]
-        resources: ["pods"]
+        resources: ["pods", "secrets"]
     admissionReviewVersions: ["v1"]
     sideEffects: None
     namespaceSelector:

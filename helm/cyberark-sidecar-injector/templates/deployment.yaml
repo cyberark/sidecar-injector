@@ -143,6 +143,14 @@ spec:
           env:
             - name: SECRETLESS_CRD_SUFFIX
               value: "{{ .Values.SECRETLESS_CRD_SUFFIX }}"
+            - name: MY_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: MY_POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
           envFrom:
             - configMapRef:
                 name: {{ .Values.conjurConfig }}
