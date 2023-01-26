@@ -48,6 +48,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added replace statements to go.mod to remove vulnerable dependency versions from the dependency tree
   [cyberark/sidecar-injector#68](https://github.com/cyberark/sidecar-injector/pull/68)
   [cyberark/sidecar-injector#69](https://github.com/cyberark/sidecar-injector/pull/69)
+- Updated golang.org/x/net to resolve CVE-2022-41721
+  [cyberark/sidecar-injector#84](https://github.com/cyberark/sidecar-injector/pull/84)
 
 ## [0.1.0] - 2020-05-28
 
