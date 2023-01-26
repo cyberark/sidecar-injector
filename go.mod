@@ -19,8 +19,8 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	golang.org/x/net v0.0.0-20220722155237-a158d28d115b // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/net v0.4.0 // indirect
+	golang.org/x/text v0.5.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
@@ -78,6 +78,8 @@ replace golang.org/x/net v0.0.0-20220225172249-27dd8689420f => golang.org/x/net 
 replace golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4 => golang.org/x/net v0.0.0-20220923203811-8be639271d50
 
 replace golang.org/x/net v0.0.0-20220722155237-a158d28d115b => golang.org/x/net v0.0.0-20220923203811-8be639271d50
+
+replace golang.org/x/net v0.0.0-20220923203811-8be639271d50 => golang.org/x/net v0.4.0
 
 replace golang.org/x/text v0.3.0 => golang.org/x/text v0.3.8
 
