@@ -1,4 +1,4 @@
-FROM google/cloud-sdk:latest
+FROM google/cloud-sdk:437.0.1-slim
 
 ARG HELM_VERSION
 ARG KUBECTL_VERSION=1.22.0
