@@ -41,7 +41,7 @@ RUN go build \
     ./cmd/sidecar-injector
 
 #=============== Sidecar Injector Container =========================
-FROM alpine:3.14
+FROM alpine:3.18
 
 RUN apk add -u shadow libc6-compat curl openssl && \
     rm -rf /var/cache/apk/*
