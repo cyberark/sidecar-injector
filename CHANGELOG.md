@@ -39,7 +39,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   with Secrets Provider [cyberark/sidecar-injector#76](https://github.com/cyberark/sidecar-injector/pull/76)
 
 ### Security
-- Update alpine base image to 3.18
+- Update alpine base image to 3.18 and golang to 1.21
+  [cyberark/sidecar-injector#92](https://github.com/cyberark/sidecar-injector/pull/92)
+- Update golang.org/x/net to  v0.17.0
   [cyberark/sidecar-injector#92](https://github.com/cyberark/sidecar-injector/pull/92)
 - Upgrade google.golang.org/protobuf to v1.29.1
   [cyberark/sidecar-injector#89](https://github.com/cyberark/sidecar-injector/pull/89)
