@@ -1,5 +1,5 @@
 #=============== Sidecar Injector Build Container ===================
-FROM golang:1.19 as mutating-webhook-service-builder
+FROM golang:1.21 as mutating-webhook-service-builder
 
 ARG GIT_COMMIT_SHORT="dev"
 ARG KUBECTL_VERSION=1.22.0
@@ -41,7 +41,7 @@ RUN go build \
     ./cmd/sidecar-injector
 
 #=============== Sidecar Injector Container =========================
-FROM alpine:3.14
+FROM alpine:3.18
 
 RUN apk add -u shadow libc6-compat curl openssl && \
     rm -rf /var/cache/apk/*
