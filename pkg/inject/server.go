@@ -290,12 +290,17 @@ func HandleAdmissionRequest(
 			&pod.ObjectMeta,
 			annotationSecretsDestinationKey,
 		)
+		runAsUser, err := getAnnotation(
+			&pod.ObjectMeta,
+			annotationRunAsUser,
+		)
 		sidecarConfig = generateSecretsProviderSidecarConfig(
 			SecretsProviderSidecarConfig{
 				containerMode: containerMode,
 				containerName: containerName,
 				sidecarImage: containerImage,
 				secretsDestination: secretsDestination,
+				runAsUser: runAsUser,
 			},
 		)
 		containerVolumeMounts := ContainerVolumeMounts{}

@@ -3,6 +3,7 @@ package inject
 import (
 	corev1 "k8s.io/api/core/v1"
 	"os"
+	"strconv"
 )
 
 type SecretsProviderSidecarConfig struct {
@@ -10,6 +11,7 @@ type SecretsProviderSidecarConfig struct {
 	containerName      string
 	sidecarImage       string
 	secretsDestination string
+	runAsUser          string
 }
 
 var conjurEnvVars = []string{
@@ -77,10 +79,16 @@ func generateSecretsProviderSidecarConfig(
 		}
 		volumeMounts = append(volumeMounts, volumeMount)
 	}
+	userID, err := strconv.ParseInt(cfg.runAsUser, 10, 64)
+	if err != nil {
+		userID = 777
+	}
+
 	container := corev1.Container{
 		Name:            cfg.containerName,
 		Image:           cfg.sidecarImage,
 		ImagePullPolicy: "Always",
+		SecurityContext: &corev1.SecurityContext{RunAsUser: &userID},
 		VolumeMounts:    volumeMounts,
 		Env: []corev1.EnvVar{
 			envVarFromFieldPath(
