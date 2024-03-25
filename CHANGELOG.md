@@ -6,7 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [0.2.0] - 2023-03-14
+## [0.2.0] - 2024-03-22
+
+### Changed
+- Upgrade Go to 1.22 (CONJSE-1842)
 
 ### Added
 - Add support for selection of sidecar container versions
