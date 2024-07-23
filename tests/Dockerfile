@@ -1,7 +1,7 @@
 FROM google/cloud-sdk:latest
 
 ARG HELM_VERSION
-ARG KUBECTL_VERSION=1.22.0
+ARG KUBECTL_VERSION=1.30.3
 
 RUN mkdir -p /src
 WORKDIR /src

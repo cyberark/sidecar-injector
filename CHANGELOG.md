@@ -6,10 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [0.2.0] - 2024-03-22
+## [0.2.0] - 2024-07-22
 
 ### Changed
 - Upgrade Go to 1.22 (CONJSE-1842)
+- Upgrade Alpine to 3.20 and Kubectl to 1.30.3 (CONJSE-1879)
 
 ### Added
 - Add support for selection of sidecar container versions
@@ -77,5 +78,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Ability to configure the sidecar container images by specifying flags on the sidecar
   injector binary [#29](https://github.com/cyberark/sidecar-injector/issues/29).
 
-[Unreleased]: https://github.com/cyberark/sidecar-injector/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/cyberark/sidecar-injector/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/cyberark/sidecar-injector/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/cyberark/sidecar-injector/releases/tag/v0.1.0
