@@ -2,7 +2,7 @@
 FROM golang:1.22 as mutating-webhook-service-builder
 
 ARG GIT_COMMIT_SHORT="dev"
-ARG KUBECTL_VERSION=1.30.3
+ARG KUBECTL_VERSION=1.30.5
 
 # On CyberArk dev laptops, golang module dependencies are downloaded with a
 # corporate proxy in the middle. For these connections to succeed we need to
@@ -12,7 +12,7 @@ ARG KUBECTL_VERSION=1.30.3
 # certificate is not available, we copy the (potentially empty) directory
 # and update container certificates based on that, rather than rely on the
 # CA file itself.
-ADD build_ca_certificate /usr/local/share/ca-certificates/
+COPY build_ca_certificate /usr/local/share/ca-certificates/
 RUN update-ca-certificates
 
 RUN mkdir -p /work
@@ -43,7 +43,7 @@ RUN go build \
 #=============== Sidecar Injector Container =========================
 FROM alpine:3.20
 
-RUN apk add -u shadow libc6-compat curl openssl && \
+RUN apk add -u --no-cache shadow libc6-compat curl openssl && \
     rm -rf /var/cache/apk/*
 
 # Add Limited user
