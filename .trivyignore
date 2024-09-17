@@ -1,5 +1,4 @@
-# The latest version of Kubectl is currently 1.30.3, and it is compiled with Go 1.22.0 which is vulnerable to CVE-2024-24788.
+# The latest version of Kubectl is currently 1.30.5, and it is compiled with Go 1.22.5 which is vulnerable to CVE-2024-34156.
 # Ignore this CVE until a newer version of Kubectl is released that is no longer compiled with a vulnerable version of Go.
-# Note that Kubectl is mainly used for deployment and testing. More details are available in internal CyberArk issue CONJSE-1879.
-# Follow up to track this removal: CONJSE-1880
-CVE-2024-24788
+# Note that Kubectl is mainly used for deployment and testing. Follow up to track this removal: CONJSE-1880
+CVE-2024-34156
