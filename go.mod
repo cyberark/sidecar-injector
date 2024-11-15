@@ -1,6 +1,6 @@
 module github.com/cyberark/sidecar-injector
 
-go 1.22.7
+go 1.23.3
 
 require (
 	github.com/evanphx/json-patch v5.9.0+incompatible

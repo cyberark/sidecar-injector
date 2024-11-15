@@ -1,11 +1,11 @@
 name: Unit Tests
 on:
-  # Only run this on pushes to 
+  # Only run this on pushes to main...
   push:
     branches:
       - main
 
-  # And when PRs operations are done
+  # ...and when PRs operations are done
   pull_request:
     types:
       - opened
@@ -18,10 +18,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set up Go 1.22
+      - name: Set up Go 1.23
         uses: actions/setup-go@v1
         with:
-          go-version: 1.22
+          go-version: 1.23
         id: go
 
       - name: Check out code into the Go module directory
