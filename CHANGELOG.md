@@ -6,10 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [0.2.0] - 2024-07-22
+## [0.2.0] - 2024-11-15
 
 ### Changed
-- Upgrade Go to 1.22 (CONJSE-1842)
+- Upgrade Go to 1.23 (CONJSE-1842, CONJSE-1880)
 - Upgrade Alpine to 3.20 and Kubectl to 1.30.3 (CONJSE-1879)
 
 ### Added
