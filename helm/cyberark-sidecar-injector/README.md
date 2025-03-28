@@ -99,7 +99,7 @@ The following table lists the configurable parameters of the CyberArk Sidecar In
 | `certsSecret` | Private key and signed certificate used by the webhook server | `nil` (required if csrEnabled is false) |
 | `sidecarInjectorImage` | Container image for the sidecar injector. | `cyberark/sidecar-injector:latest` |
 | `secretlessImage` | Container image for the Secretless sidecar. | `cyberark/secretless-broker:latest` |
-| `authenticatorImage` | Container image for the Kubernetes Authenticator sidecar. | `cyberark/conjur-kubernetes-authenticator:latest` |
+| `authenticatorImage` | Container image for the Kubernetes Authenticator sidecar. | `cyberark/conjur-authn-k8s-client:latest` |
 | `secretsProviderImage` | Container image for the Secrets Provider sidecar. | `cyberark/secrets-provider-for-k8s:latest` |
 | `deploymentApiVersion` | The supported apiVersion for Deployments. This is the value that will be set in the Deployment manifest. It defaults to the supported apiVersion for Deployments on the latest Kubernetes release. | `apps/v1` |
 

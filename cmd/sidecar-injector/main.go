@@ -13,6 +13,7 @@ import (
 	"github.com/cyberark/sidecar-injector/pkg/inject"
 	"github.com/cyberark/sidecar-injector/pkg/version"
 )
+
 // Define environment variables used in Secrets Provider config
 
 func main() {
@@ -27,7 +28,7 @@ func main() {
 	flag.StringVar(&parameters.KeyFile, "tlsKeyFile", "/etc/webhook/certs/key.pem", "Path to file containing the x509 Private Key for HTTPS.")
 	flag.BoolVar(&parameters.NoHTTPS, "noHTTPS", false, "Run Webhook server as HTTP (not HTTPS).")
 	flag.StringVar(&parameters.SecretlessContainerImage, "secretless-image", "cyberark/secretless-broker:latest", "Container image for the Secretless sidecar")
-	flag.StringVar(&parameters.AuthenticatorContainerImage, "authenticator-image", "cyberark/conjur-kubernetes-authenticator:latest", "Container image for the Kubernetes Authenticator sidecar")
+	flag.StringVar(&parameters.AuthenticatorContainerImage, "authenticator-image", "cyberark/conjur-authn-k8s-client:latest", "Container image for the Kubernetes Authenticator sidecar")
 	flag.StringVar(&parameters.SecretsProviderContainerImage, "secrets-provider-image", "cyberark/secrets-provider-for-k8s:latest", "Container image for the Secrets Provider sidecar")
 
 	// Flag.parse only covers `-version` flag but for `version`, we need to explicitly

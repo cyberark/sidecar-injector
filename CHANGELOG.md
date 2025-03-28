@@ -6,11 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [0.2.0] - 2024-11-15
-
-### Changed
-- Upgrade Go to 1.23 (CONJSE-1842, CONJSE-1880)
-- Upgrade Alpine to 3.20 and Kubectl to 1.30.3 (CONJSE-1879)
+## [1.0.0] - 2025-03-28
 
 ### Added
 - Add support for selection of sidecar container versions
@@ -24,6 +20,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   [cyberark/sidecar-injector#79](https://github.com/cyberark/sidecar-injector/pull/79) <br>
 
 ### Changed
+- BREAKING CHANGE: Changed annotations to be consistent with other Cyberark repositories.
+  sidecar-injector.cyberark.com is changed to conjur.org
+  All user manifests must be changed to use the new annotations. [cyberark/sidecar-injector#70](https://github.com/cyberark/sidecar-injector/pull/70)
+- BREAKING CHANGE: Changed annotation `conjur-token-receivers` to `conjur-inject-volumes` for compatability
+  with Secrets Provider [cyberark/sidecar-injector#76](https://github.com/cyberark/sidecar-injector/pull/76)
+- Upgrade Go to 1.23 (CONJSE-1842, CONJSE-1880)
+- Upgrade Alpine to 3.20 and Kubectl to 1.30.3 (CONJSE-1879)
 - Upgrade testify to 1.8.0 and k8s to 0.25.2
   [cyberark/sidecar-injector#77](https://github.com/cyberark/sidecar-injector/pull/78)
 - Upgrade Go to 1.19
@@ -34,13 +37,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   from the deprecated 'v1beta1' versions to 'v1' so that the Sidecar Injector
   works on Kubernetes v1.22 or newer and OpenShift v4.9 or newer.
   [cyberark/sidecar-injector#62](https://github.com/cyberark/sidecar-injector/pull/62)
-- BREAKING CHANGE: Changed annotations to be consistent with other Cyberark repositories.
-  sidecar-injector.cyberark.com is changed to conjur.org
-  All user manifests must be changed to use the new annotations. [cyberark/sidecar-injector#70](https://github.com/cyberark/sidecar-injector/pull/70)
 - Deployment resource `apiVersion` (in manifests) changed from `extensions/v1beta1` to
   `apps/v1`. [#47](https://github.com/cyberark/sidecar-injector/pull/47)
-- BREAKING CHANGE: Changed annotation `conjur-token-receivers` to `conjur-inject-volumes` for compatability
-  with Secrets Provider [cyberark/sidecar-injector#76](https://github.com/cyberark/sidecar-injector/pull/76)
+- Updated Kubernetes authenticator image from conjur-kubernetes-authenticator to
+  conjur-authn-k8s-client. (CNJR-9101)
 
 ### Security
 - Update alpine base image to 3.18 and golang to 1.21
