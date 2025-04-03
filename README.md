@@ -152,7 +152,7 @@ The docker image entrypoint is the server binary. The binary supports the follow
 ```bash
 Usage of cyberark-sidecar-injector:
   -authenticator-image string
-        Container image for the Kubernetes Authenticator sidecar (default "cyberark/conjur-kubernetes-authenticator:latest")
+        Container image for the Kubernetes Authenticator sidecar (default "cyberark/conjur-authn-k8s-client:latest")
   -noHTTPS
         Run Webhook server as HTTP (not HTTPS).
   -port int
@@ -215,7 +215,7 @@ Note: add `--secrets-provider ` if using secrets provider.
          --deployment-api-version apps/v1 \
          --sidecar-injector-image cyberark/sidecar-injector:latest \
          --secretless-image cyberark/secretless-broker:latest \
-         --authenticator-image cyberark/conjur-kubernetes-authenticator:latest \
+         --authenticator-image cyberark/conjur-authn-k8s-client:latest \
          --secrets-provider-image cyberark/secrets-provider-for-k8s:latest
          > ./deployment/deployment.yaml
     ```

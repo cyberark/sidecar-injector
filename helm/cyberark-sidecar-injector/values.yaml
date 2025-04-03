@@ -16,7 +16,7 @@ namespaceSelectorLabel: cyberark-sidecar-injector
 # certsSecret:
 
 secretlessImage: cyberark/secretless-broker:latest
-authenticatorImage: cyberark/conjur-kubernetes-authenticator:latest
+authenticatorImage: cyberark/conjur-authn-k8s-client:latest
 secretsProviderImage: cyberark/secrets-provider-for-k8s:latest
 
 sidecarInjectorImage: cyberark/sidecar-injector:latest
