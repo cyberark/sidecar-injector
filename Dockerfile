@@ -1,8 +1,8 @@
 #=============== Sidecar Injector Build Container ===================
-FROM golang:1.23 AS mutating-webhook-service-builder
+FROM golang:1.24 AS mutating-webhook-service-builder
 
 ARG GIT_COMMIT_SHORT="dev"
-ARG KUBECTL_VERSION=1.31.2
+ARG KUBECTL_VERSION=1.34.0
 
 # On CyberArk dev laptops, golang module dependencies are downloaded with a
 # corporate proxy in the middle. For these connections to succeed we need to
@@ -41,7 +41,7 @@ RUN go build \
     ./cmd/sidecar-injector
 
 #=============== Sidecar Injector Container =========================
-FROM alpine:3.20
+FROM alpine:3.22
 
 RUN apk add -u --no-cache shadow libc6-compat curl openssl && \
     rm -rf /var/cache/apk/*
