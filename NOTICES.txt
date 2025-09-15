@@ -7,14 +7,14 @@ of the license associated with each component.
 
 
 Section 1: Apache-2.0
->>> k8s.io/api v0.25.2
->>> k8s.io/apimachinery v0.25.2
+>>> k8s.io/api v0.34.1
+>>> k8s.io/apimachinery v0.34.1
 
 Section 2: MIT
->>> github.com/stretchr/testify v1.8.0
+>>> github.com/stretchr/testify v1.11.1
 
 Section 3: BSD-3-Clause
->>> github.com/evanphx/json-patch v5.6.0+incompatible
+>>> github.com/evanphx/json-patch v5.9.11+incompatible
 
 
 APPENDIX: Standard License Files and Templates
@@ -27,7 +27,7 @@ APPENDIX: Standard License Files and Templates
 
 Apache-2.0 License is applicable to the following component(s).
 
->>> k8s.io/api v0.25.2
+>>> k8s.io/api v0.34.1
 Copyright <YEAR> <COPYRIGHT HOLDER>
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,7 +42,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
->>> k8s.io/apimachinery v0.25.2
+>>> k8s.io/apimachinery v0.34.1
 Copyright <YEAR> <COPYRIGHT HOLDER>
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -62,7 +62,7 @@ limitations under the License.
 
 MIT License is applicable to the following component(s).
 
->>> github.com/stretchr/testify v1.8.0
+>>> github.com/stretchr/testify v1.11.1
 
 Copyright (c) 2012-2018 Mat Ryer and Tyler Bunnell
 
@@ -89,7 +89,7 @@ SOFTWARE.
 
 BSD-3-Clause License is applicable to the following component(s).
 
->>> github.com/evanphx/json-patch v5.6.0+incompatible
+>>> github.com/evanphx/json-patch v5.9.11+incompatible
 
 Copyright (c) 2014, Evan Phoenix
 All rights reserved.

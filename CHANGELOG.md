@@ -25,12 +25,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   All user manifests must be changed to use the new annotations. [cyberark/sidecar-injector#70](https://github.com/cyberark/sidecar-injector/pull/70)
 - BREAKING CHANGE: Changed annotation `conjur-token-receivers` to `conjur-inject-volumes` for compatability
   with Secrets Provider [cyberark/sidecar-injector#76](https://github.com/cyberark/sidecar-injector/pull/76)
-- Upgrade Go to 1.23 (CONJSE-1842, CONJSE-1880)
-- Upgrade Alpine to 3.20 and Kubectl to 1.30.3 (CONJSE-1879)
-- Upgrade testify to 1.8.0 and k8s to 0.25.2
-  [cyberark/sidecar-injector#77](https://github.com/cyberark/sidecar-injector/pull/78)
-- Upgrade Go to 1.19
-  [cyberark/sidecar-injector#78](https://github.com/cyberark/sidecar-injector/pull/78)
+- Upgrade Go to 1.24
+- Upgrade Alpine to 3.22 and Kubectl to 1.34.0
 - Dropped support for Helm V2 and converted to Helm V3.
   [cyberark/sidecar-injector#60](https://github.com/cyberark/sidecar-injector/pull/60)
 - K8s APIs used for mutating webhook request/response messages are upgraded
