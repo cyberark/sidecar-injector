@@ -39,11 +39,11 @@ func main() {
 
 	// Either the flag or the arg should be enough to show the version
 	if *showVersion || flag.Arg(0) == "version" {
-		fmt.Printf("cyberark-sidecar-injector v%s\n", version.Get())
+		fmt.Printf("cyberark-sidecar-injector v%s\n", version.FullVersionName)
 		return
 	}
 
-	log.Printf("cyberark-sidecar-injector v%s starting up...", version.Get())
+	log.Printf("cyberark-sidecar-injector v%s starting up...", version.FullVersionName)
 
 	whsvr := &inject.WebhookServer{
 		Params: parameters,

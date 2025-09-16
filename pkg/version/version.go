@@ -2,16 +2,17 @@ package version
 
 import "fmt"
 
-// gitVersion is a SemVer that captures the baked-in version of the sidecar-injector.
-const gitVersion = "1.0.0"
+// Version field is a SemVer that should indicate the baked-in version
+// of the CLI
+var Version = "unset"
 
-// gitCommitShort denotes the specific build type for the sidecar-injector. It defaults to the
-// special value 'dev'. It is expected to be replaced by the compile-time value of the
-// short sha1 from git of the build commit, output of $(git rev-parse --short HEAD).
-var gitCommitShort = "dev"
+// Tag field denotes the specific build type for the CLI. It may
+// be replaced by compile-time variables if needed to provide the git
+// commit information in the final binary. See `Static long version tags`
+// in the `Building` section of `CONTRIBUTING.md` for more information on
+// this variable.
+var Tag = "unset"
 
-// Get returns the user-visible aggregation of gitVersion and gitCommitShort
-// of this codebase.
-func Get() string {
-	return fmt.Sprintf("%s-%s", gitVersion, gitCommitShort)
-}
+// FullVersionName is the user-visible aggregation of version and tag
+// of this codebase
+var FullVersionName = fmt.Sprintf("%s-%s", Version, Tag)

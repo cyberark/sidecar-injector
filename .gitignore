@@ -29,3 +29,5 @@ scan_results-sidecar-injector.xml
 
 # Temporary directory to store the CyberArk proxy CA certificate
 build_ca_certificate/
+
+VERSION

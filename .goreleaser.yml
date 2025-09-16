@@ -1,3 +1,5 @@
+version: 2
+
 project_name: cyberark-sidecar-injector
 
 builds:
@@ -14,9 +16,14 @@ builds:
   - linux
   goarch:
   - amd64
-  # The `gitCommitShort` override is there to provide the git commit information in the
+  # The `Version` and `Tag` overrides are there to provide the git commit information in the
   # final binary.
-  ldflags: -s -w -linkmode external -X github.com/cyberark/sidecar-injector/pkg/version.gitCommitShort={{ .ShortCommit }}" -extldflags "-static"
+  ldflags:
+    - -s
+    - -w
+    - -X "github.com/cyberark/sidecar-injector/pkg/version.Version={{ .Env.VERSION }}"
+    - -X "github.com/cyberark/sidecar-injector/pkg/version.Tag={{ .ShortCommit }}"
+    - -extldflags "-static"
   hooks:
     post:
       # Copy the binary out into the <dist> path, and give the copy the name we want
@@ -34,7 +41,7 @@ archives:
       - CHANGELOG.md
       - NOTICES.txt
       - LICENSE
-    name_template: "{{.ProjectName}}_{{.Version}}_{{.Os}}_{{.Arch}}"
+    name_template: "{{.ProjectName}}_{{.Env.VERSION}}_{{.Os}}_{{.Arch}}"
     wrap_in_directory: true
 
 checksum:
@@ -46,7 +53,7 @@ snapshot:
   name_template: "{{ .Tag }}-next"
 
 release:
-  disable: false
+  disable: true
   draft: true
   extra_files:
     - glob: NOTICES.txt

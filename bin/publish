@@ -1,76 +1,132 @@
 #!/bin/bash
 
-set -eu
+set -e
 
+# Navigate to the bin directory (where this script lives) to ensure we can run this script
+# from anywhere.
 cd "$(dirname "${0}")"
+
 . ./build_utils
-cd ..
 
-readonly VERSION="$(git_version)"
-readonly REGISTRY="cyberark"
-readonly IMAGE_NAME="sidecar-injector"
-readonly LOCAL_IMAGE_WITH_TAG="${IMAGE_NAME}:$(full_version_tag)"
-
-function publish_image() {
-  local tag=${1}
-  image_with_version_tag="${REGISTRY}/${IMAGE_NAME}:${tag}"
-  echo "Tagging and pushing ${image_with_version_tag}"
-
-  docker tag "${LOCAL_IMAGE_WITH_TAG}" "${image_with_version_tag}"
-  docker push "${image_with_version_tag}"
+function print_help() {
+  echo "Internal Release Usage: ${0} --internal"
+  echo "External Release Usage: ${0} --edge"
+  echo "Promote Usage: ${0} --promote --source <VERSION> --target <VERSION>"
+  echo " --internal: publish images to registry.tld"
+  echo " --edge: publish docker images to docker hub"
+  echo " --source <VERSION>: specify version number of local image"
+  echo " --target <VERSION>: specify version number of remote image"
 }
 
-function main() {
-  # If an argument is passed to the script it will be read as a tag, and this single tag
-  # will be published then the script will exit. This functionality is useful for
-  # publishing single tags without involving the tag-triggered builds logic below.
-  if [[ $# -gt 0 ]]
-  then
-      publish_image $1
-      exit 0;
-  fi
+# Fail if no arguments are given.
+if [[ $# -lt 1 ]]; then
+  print_help
+  exit 1
+fi
 
-  if [[ -z "${TAG_NAME:-}" ]]; then
-    echo "Please supply environment variable TAG_NAME."
-    echo "If you see this error in Jenkins it means the publish script was run"
-    echo "for a build that wasn't triggered by a tag - please check publish stage conditions."
+PUBLISH_INTERNAL=false
+PUBLISH_EDGE=false
+PROMOTE=false
+PULL_SOURCE_IMAGES=false
+
+while [[ $# -gt 0 ]]; do
+  case "${1}" in
+  --internal)
+    PUBLISH_INTERNAL=true
+    ;;
+  --pull)
+    PULL_SOURCE_IMAGES=true
+    ;;
+  --edge)
+    PUBLISH_EDGE=true
+    ;;
+  --promote)
+    PROMOTE=true
+    ;;
+  --source)
+    SOURCE_ARG="${2}"
+    shift
+    ;;
+  --target)
+    TARGET_ARG="${2}"
+    shift
+    ;;
+  --help)
+    print_help
     exit 1
+    ;;
+  *)
+    echo "Unknown option: ${1}"
+    print_help
+    exit 1
+    ;;
+  esac
+  shift
+done
+
+readonly REGISTRY="cyberark"
+readonly LOCAL_REGISTRY="registry.tld"
+# Version derived from CHANGLEOG and automated release library
+VERSION_WITH_COMMIT="$(project_version_with_commit)"
+readonly VERSION_WITH_COMMIT
+readonly IMAGES=(
+  "sidecar-injector"
+)
+
+if [[ ${PUBLISH_INTERNAL} = true ]]; then
+  echo "Publishing built images internally to registry.tld."
+  SOURCE_TAG=${VERSION_WITH_COMMIT}
+  REMOTE_TAG=${VERSION_WITH_COMMIT}
+
+  echo "SOURCE_TAG=${SOURCE_TAG}, REMOTE_TAG=${REMOTE_TAG}"
+  for IMAGE_NAME in "${IMAGES[@]}"; do
+    tag_and_push "${IMAGE_NAME}:${SOURCE_TAG}" "${LOCAL_REGISTRY}/${IMAGE_NAME}:${REMOTE_TAG}"
+  done
+fi
+
+if [[ ${PUBLISH_EDGE} = true ]]; then
+  echo "Performing edge release."
+  SOURCE_TAG=${VERSION_WITH_COMMIT}
+
+  if [[ ${PULL_SOURCE_IMAGES} = true ]]; then
+    echo "Pulling source images from local registry"
+    for IMAGE_NAME in "${IMAGES[@]}"; do
+      docker pull "${LOCAL_REGISTRY}/${IMAGE_NAME}:${SOURCE_TAG}"
+    done
   fi
 
-  local tag_version="${TAG_NAME#v}"
-  # Ensure TAG_NAME version matches project version
-  if [[ "${tag_version}" != "${VERSION}" ]]; then
-    echo "TAG_NAME envvar version was '${tag_version}', expected '${VERSION}'";
-    echo "TAG_NAME envvar version must match project version";
-    exit 1;
+  for IMAGE_NAME in "${IMAGES[@]}"; do
+    tag_and_push "${IMAGE_NAME}:${SOURCE_TAG}" "${REGISTRY}/${IMAGE_NAME}:edge"
+  done
+fi
+
+if [[ ${PROMOTE} = true ]]; then
+  if [[ -z ${SOURCE_ARG:-} || -z ${TARGET_ARG:-} ]]; then
+  echo "When promoting, --source and --target flags are required."
+  print_help
+  exit 1
   fi
 
-  # Accumulate TAGS
-  #
+  # Update vars to utilize build_utils
+  SOURCE_TAG=${SOURCE_ARG}
+  REMOTE_TAG=${TARGET_ARG}
 
-  local TAGS=(
-    "${VERSION}"
+  echo "Promoting image to ${REMOTE_TAG}"
+  readonly TAGS=(
+    "${REMOTE_TAG}"
+    "latest"
   )
 
-  # Add less specific version tags, eg. given 1.2.3, add 1.2 and 1
-  for tag in $(gen_versions "${VERSION}"); do
-    TAGS+=("${tag}")
-  done
-
-  # Add 'latest' tag only when TAG_NAME is the highest semantic tag
-  local LATEST_TAG
-  LATEST_TAG="$(git tag | sort -r --version-sort)"
-  if [[ "${TAG_NAME}" == "${LATEST_TAG}" ]]; then
-    TAGS+=('latest')
+  if [[ ${PULL_SOURCE_IMAGES} = true ]]; then
+    echo "Pulling source images from local registry"
+    for IMAGE_NAME in "${IMAGES[@]}"; do
+      docker pull "${LOCAL_REGISTRY}/${IMAGE_NAME}:${SOURCE_TAG}"
+    done
   fi
 
-  # Publish
-  #
-
-  # Publish tags
-  for tag in "${TAGS[@]}"; do
-    publish_image "${tag}"
+  for IMAGE_NAME in "${IMAGES[@]}"; do
+    for tag in "${TAGS[@]}" $(gen_versions "${REMOTE_TAG}"); do
+      tag_and_push "${LOCAL_REGISTRY}/${IMAGE_NAME}:${SOURCE_TAG}" "${REGISTRY}/${IMAGE_NAME}:${tag}"
+    done
   done
-}
-
-main "$@"
+fi

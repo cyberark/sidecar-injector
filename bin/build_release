@@ -1,22 +1,53 @@
-#!/bin/bash -e
+#!/usr/bin/env bash
 
-CURRENT_DIR=$(cd $(dirname "$0"); pwd)
+set -eo pipefail
 
-# xgo because it allows cross-compilation
-GORELEASER_IMAGE="cyberark/goreleaser:latest-xgo"
+# Navigate to the bin directory (where this script lives) to ensure we can run this script
+# from anywhere.
+cd "$(dirname "$0")"
 
-echo "Current dir: $CURRENT_DIR"
+. ./build_utils
 
-# TODO: The image cyberark/goreleaser:latest-xgo will need to be pushed to Dockerhub, and
-#  the command below should become `docker pull cyberark/goreleaser:latest-xgo`
+function build_binaries_and_archives() {
+    echo "building binaries and archives with GoReleaser..."
 
-# NOTE: Piping the Dockerfile sends an empty context to docker build
-docker build -t "${GORELEASER_IMAGE}" - < "$CURRENT_DIR/Dockerfile.releaser"
+    local GO_VERSION
+    local GORELEASER_IMAGE
 
-docker run --rm -t \
-  --env GITHUB_TOKEN \
-  --volume "$CURRENT_DIR/..:/work" \
-  --workdir /work \
-  "${GORELEASER_IMAGE}" --rm-dist "$@"
+    # Use a GoReleaser Docker image containing cross-compilation tools
+    # This image is recommended by the official GoReleaser docs
+    # https://goreleaser.com/cookbooks/cgo-and-crosscompiling/
+    GORELEASER_IMAGE="goreleaser/goreleaser-cross:v1.24"
 
-echo "Releases built. Archives can be found in dist/goreleaser"
+    # Get the version of Go specified by the "go directive" in go.mod
+    # Grep it to avoid Go binary dependency
+    GO_VERSION="v$(grep "^\bgo\b" "${REPO_ROOT}/go.mod" | awk '{print $2}')"
+
+    # Compile binaries with GoReleaser
+    echo "Docker image for release build: ${GORELEASER_IMAGE}"
+    docker run --rm \
+      --env VERSION="${VERSION}" \
+      --env GO_VERSION="${GO_VERSION}" \
+      --env GOTOOLCHAIN=auto \
+      --volume "${REPO_ROOT}:/${PROJECT_WD}" \
+      --workdir "/${PROJECT_WD}" \
+      "${GORELEASER_IMAGE}" --clean "$@"
+
+    echo "Binaries and archives built."
+}
+
+function main() {
+    export REPO_ROOT
+    export PROJECT_WD
+    export VERSION
+
+    REPO_ROOT="$(repo_root)"
+    PROJECT_WD="github.com/cyberark/conjur-sidecar-injector"
+    VERSION="$(project_semantic_version)"
+
+    build_binaries_and_archives "$@"
+
+    echo "Releases built. Archives can be found in dist/goreleaser"
+}
+
+main "$@"

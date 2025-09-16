@@ -16,10 +16,16 @@ function main() {
 }
 
 function build_docker_image() {
+  VERSION=unreleased
+  # Version derived from CHANGELOG and automated release library
+  [ -f VERSION ] && VERSION=$(<VERSION)
+  FULL_VERSION_TAG="$VERSION-$(git_commit_short)"
+
   docker build \
     --build-arg "GIT_COMMIT_SHORT=$(git_commit_short)" \
+    --build-arg "VERSION=$VERSION" \
     -t "${IMAGE_NAME}:latest" \
-    -t "${IMAGE_NAME}:$(full_version_tag)" \
+    -t "${IMAGE_NAME}:${FULL_VERSION_TAG}" \
     .
 }
 

@@ -6,10 +6,45 @@ set -euo pipefail
 # Functions to generate version numbers for this project
 ####
 
-readonly VERSION_GO_FILE="pkg/version/version.go"
+function repo_root() {
+  git rev-parse --show-toplevel
+}
 
-function git_version() {
-  grep -v '^//' "${VERSION_GO_FILE}" | grep 'const gitVersion =' | awk -F'= ' '{print $2}' | tr -d '"'
+function git_commit() {
+  git rev-parse --short HEAD
+}
+
+function project_version() {
+  # VERSION derived from CHANGELOG and automated release library
+  echo "$(<"$(repo_root)/VERSION")"
+}
+
+function project_semantic_version() {
+  local version
+  version="$(project_version)"
+
+  # Remove Jenkins build number from VERSION
+  echo "${version/-*/}"
+}
+
+function project_semantic_version_with_commit() {
+  echo "$(project_semantic_version)-$(git_commit)"
+}
+
+function project_version_with_commit() {
+  echo "$(project_version)-$(git_commit)"
+}
+
+# generate less specific versions, eg. given 1.2.3 will print 1.2 and 1
+# (note: the argument itself is not printed, append it explicitly if needed)
+function gen_versions() {
+  local version="${1}"
+
+  # echo "${version%%.*}-latest"
+  while [[ "${version}" = *.* ]]; do
+    version="${version%.*}"
+    echo "${version}"
+  done
 }
 
 function git_commit_short() {
@@ -20,14 +55,15 @@ function full_version_tag() {
   echo "$(git_version)-$(git_commit_short)"
 }
 
-# generate less specific versions, eg. given 1.2.3 will print 1.2 and 1
-# (note: the argument itself is not printed, append it explicitly if needed)
-function gen_versions() {
-  local version=$1
-  while [[ $version = *.* ]]; do
-    version=${version%.*}
-    echo $version
-  done
+function tag_and_push() {
+  local source="$1"
+  shift
+  local target="$1"
+  shift
+
+  echo "Tagging and pushing $target..."
+  docker tag "${source}" "${target}"
+  docker push "${target}"
 }
 
 function retrieve_cyberark_ca_cert() {
