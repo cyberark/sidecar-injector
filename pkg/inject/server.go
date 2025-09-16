@@ -3,7 +3,7 @@ package inject
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"strings"
@@ -56,7 +56,7 @@ type WebhookServerParameters struct {
 }
 
 func failWithResponse(errMsg string) admissionv1.AdmissionResponse {
-	log.Printf(errMsg)
+	log.Print(errMsg)
 	return admissionv1.AdmissionResponse{
 		Result: &metav1.Status{
 			Message: errMsg,
@@ -112,10 +112,10 @@ func HandleAdmissionRequest(
 		}
 	}
 
-	injectType, err := getAnnotation(&pod.ObjectMeta, annotationInjectTypeKey)
-	containerMode, err := getAnnotation(&pod.ObjectMeta, annotationContainerModeKey)
-	containerName, err := getAnnotation(&pod.ObjectMeta, annotationContainerNameKey)
-	conjurInjectVolumeStr, err := getAnnotation(
+	injectType, _ := getAnnotation(&pod.ObjectMeta, annotationInjectTypeKey)
+	containerMode, _ := getAnnotation(&pod.ObjectMeta, annotationContainerModeKey)
+	containerName, _ := getAnnotation(&pod.ObjectMeta, annotationContainerNameKey)
+	conjurInjectVolumeStr, _ := getAnnotation(
 		&pod.ObjectMeta,
 		annotationConjurInjectVolumesKey,
 	)
@@ -187,7 +187,6 @@ func HandleAdmissionRequest(
 				sidecarImage:                  imageName,
 			},
 		)
-		break
 	case "authenticator":
 		conjurAuthConfigMapName, err := getAnnotation(
 			&pod.ObjectMeta,
@@ -261,8 +260,6 @@ func HandleAdmissionRequest(
 			}
 		}
 		sidecarConfig.ContainerVolumeMounts = containerVolumeMounts
-
-		break
 	case "secrets-provider":
 		containerImage, err := getAnnotation(
 			&pod.ObjectMeta,
@@ -290,11 +287,15 @@ func HandleAdmissionRequest(
 			&pod.ObjectMeta,
 			annotationSecretsDestinationKey,
 		)
+		if err != nil {
+			secretsDestination = "file"
+			log.Printf("Using secrets destination %s", secretsDestination)
+		}
 		sidecarConfig = generateSecretsProviderSidecarConfig(
 			SecretsProviderSidecarConfig{
-				containerMode: containerMode,
-				containerName: containerName,
-				sidecarImage: containerImage,
+				containerMode:      containerMode,
+				containerName:      containerName,
+				sidecarImage:       containerImage,
 				secretsDestination: secretsDestination,
 			},
 		)
@@ -315,7 +316,6 @@ func HandleAdmissionRequest(
 			}
 		}
 		sidecarConfig.ContainerVolumeMounts = containerVolumeMounts
-		break
 	default:
 		errMsg := fmt.Sprintf(
 			"Mutation failed for pod %s, in namespace %s, due to invalid inject type annotation value = %s",
@@ -323,7 +323,7 @@ func HandleAdmissionRequest(
 			req.Namespace,
 			injectType,
 		)
-		log.Printf(errMsg)
+		log.Print(errMsg)
 
 		return admissionv1.AdmissionResponse{
 			Result: &metav1.Status{
@@ -356,7 +356,7 @@ func HandleAdmissionRequest(
 func (whsvr *WebhookServer) Serve(w http.ResponseWriter, r *http.Request) {
 	var body []byte
 	if r.Body != nil {
-		if data, err := ioutil.ReadAll(r.Body); err == nil {
+		if data, err := io.ReadAll(r.Body); err == nil {
 			body = data
 		}
 	}
