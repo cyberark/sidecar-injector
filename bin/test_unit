@@ -2,28 +2,31 @@
 
 set -eox pipefail
 
-cd $(dirname $0)
+junit_output_file="./junit.output"
+. bin/build_utils
 
 function main() {
-  build_image
-  run_unit_tests $1
+  retrieve_cyberark_ca_cert
+  build_docker_ut_image
+  run_unit_tests
 }
 
+function build_docker_ut_image() {
+  echo "Building unit test image..."
+  docker build -f Dockerfile.test -t sidecar-injector-test-runner:latest .
+}
 
 function run_unit_tests() {
   echo "Running unit tests..."
-  cd ../pkg/inject
-  if [ "$1" ]; then
-    go test -v -run $1
-  else
-    go test -v
-  fi
+  docker run --rm \
+             --volume "$PWD"/:/sidecar-injector/test/ \
+             sidecar-injector-test-runner:latest \
+             -coverprofile="./test/c.out.tmp" \
+             ./... \
+             | tee -a "$junit_output_file" && \
+             cat c.out.tmp | grep -v "_dev.go" > c.out && \
+             rm -f c.out.tmp
   echo "Unit test exit status: $?"
 }
 
-function build_image() {
-  echo "Building image..."
-  ./build
-}
-
-main $1
+main

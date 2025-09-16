@@ -1,0 +1,18 @@
+FROM golang:1.24-alpine
+LABEL org.opencontainers.image.authors="CyberArk Software Ltd."
+LABEL id="conjur-cli-go-junit-processor"
+
+WORKDIR /test
+
+RUN apk add -u curl \
+               gcc \
+               git \
+               mercurial \
+               musl-dev \
+               bash
+
+# gocov converts native coverage output to gocov's JSON interchange format
+# gocov-xml converts gocov format to XML for use with Jenkins/Cobertura
+RUN go install github.com/jstemmer/go-junit-report@latest && \
+    go install github.com/axw/gocov/gocov@latest && \
+    go install github.com/AlekSi/gocov-xml@latest

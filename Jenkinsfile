@@ -1,5 +1,5 @@
 #!/usr/bin/env groovy
-@Library("product-pipelines-shared-library") _
+@Library(["product-pipelines-shared-library", "conjur-enterprise-sharedlib"]) _
 
 // Automated release, promotion and dependencies
 properties([
@@ -22,22 +22,18 @@ if (params.MODE == "PROMOTE") {
       buildMode: params.MODE,
       branch: env.BRANCH_NAME)
 
+    INFRAPOOL_EXECUTORV2_AGENT_0.agentGet from: "${assetDirectory}/", to: "./"
+    signArtifacts patterns: ["*.tar.gz"]
+    INFRAPOOL_EXECUTORV2_AGENT_0.agentPut from: "*.sig", to: "${assetDirectory}"
+
     // Pull existing images from internal registry in order to promote
     infrapool.agentSh """
       export PATH="release-tools/bin:${PATH}"
-      docker pull registry.tld/sidecar-injector:${sourceVersion}
+      docker pull registry.tld/sidecar-injector:${sourceVersion}-${gitCommit(INFRAPOOL_EXECUTORV2_AGENT_0)}
       # Promote source version to target version.
-      ./bin/publish --promote --source ${sourceVersion} --target ${targetVersion}
+      ./bin/publish --promote --source ${sourceVersion}-${gitCommit(INFRAPOOL_EXECUTORV2_AGENT_0)} --target ${targetVersion}
     """
-
-    dockerImages = "docker-image*.tar"
-    // Place the Docker image(s) onto the Jenkins agent and sign them
-    infrapool.agentGet from: "${assetDirectory}/${dockerImages}", to: "./"
-    signArtifacts patterns: ["${dockerImages}"]
-    // Copy the docker images and signed artifacts (.sig) back to
-    // infrapool and into the assetDirectory for release promotion
-    dockerImageLocation = pwd() + "/docker-image*.tar*"
-    infrapool.agentPut from: "${dockerImageLocation}", to: "${assetDirectory}"
+    
     // Resolve ownership issue before promotion
     sh 'git config --global --add safe.directory ${PWD}'
   }
@@ -123,15 +119,52 @@ pipeline {
       }
     }
 
-    stage('Image Build') {
-      steps {
-        script {
-          INFRAPOOL_EXECUTORV2_AGENT_0.agentSh './bin/build'
+    stage('Build while unit testing') {
+      parallel {
+
+        stage('Image Build') {
+          steps {
+            script {
+              INFRAPOOL_EXECUTORV2_AGENT_0.agentSh './bin/build'
+            }
+          }
+        }
+
+        stage('Run unit tests') {
+          steps {
+            script {
+              INFRAPOOL_EXECUTORV2_AGENT_0.agentSh './bin/test_unit'
+            }
+          }
+          post {
+            always {
+              script {
+                INFRAPOOL_EXECUTORV2_AGENT_0.agentSh './bin/coverage'
+                INFRAPOOL_EXECUTORV2_AGENT_0.agentStash name: 'xml-out', includes: '*.xml'
+                unstash 'xml-out'
+                junit 'junit.xml'
+
+                cobertura autoUpdateHealth: false,
+                  autoUpdateStability: false,
+                  coberturaReportFile: 'coverage.xml',
+                  conditionalCoverageTargets: '70, 0, 0',
+                  failUnhealthy: false,
+                  failUnstable: false,
+                  maxNumberOfBuilds: 0,
+                  lineCoverageTargets: '70, 0, 0',
+                  methodCoverageTargets: '70, 0, 0',
+                  onlyStable: false,
+                  sourceEncoding: 'ASCII',
+                  zoomCoverageChart: false
+                codacy action: 'reportCoverage', filePath: "coverage.xml"
+              }
+            }
+          }
         }
       }
     }
 
-    stage('Test Sidecar Injector'){
+    stage('Run Integration Tests'){
       steps {
         script {
           INFRAPOOL_EXECUTORV2_AGENT_0.agentSh 'summon -f ./tests/secrets.yml ./run-tests'
@@ -203,7 +236,7 @@ pipeline {
             INFRAPOOL_EXECUTORV2_AGENT_0.agentSh "${toolsDirectory}/bin/copy_goreleaser_artifacts ${assetDirectory}"
 
             // Create Go application SBOM using the go.mod version for the golang container image
-            INFRAPOOL_EXECUTORV2_AGENT_0.agentSh """export PATH="${toolsDirectory}/bin:${PATH}" && go-bom --tools "${toolsDirectory}" --go-mod ./go.mod --image "golang" --main "cmd/" --output "${billOfMaterialsDirectory}/go-app-bom.json" """
+            INFRAPOOL_EXECUTORV2_AGENT_0.agentSh """export PATH="${toolsDirectory}/bin:${PATH}" && go-bom --tools "${toolsDirectory}" --go-mod ./go.mod --image "golang" --main "cmd/sidecar-injector" --output "${billOfMaterialsDirectory}/go-app-bom.json" """
             // Create Go module SBOM
             INFRAPOOL_EXECUTORV2_AGENT_0.agentSh """export PATH="${toolsDirectory}/bin:${PATH}" && go-bom --tools "${toolsDirectory}" --go-mod ./go.mod --image "golang" --output "${billOfMaterialsDirectory}/go-mod-bom.json" """
           }
