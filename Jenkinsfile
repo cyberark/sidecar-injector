@@ -18,20 +18,20 @@ if (params.MODE == "PROMOTE") {
     // Anything added to assetDirectory will be attached to the Github Release
 
     runSecurityScans(infrapool,
-      image: "registry.tld/sidecar-injector:${sourceVersion}-${gitCommit(INFRAPOOL_EXECUTORV2_AGENT_0)}",
+      image: "registry.tld/sidecar-injector:${sourceVersion}-${gitCommit(infrapool)}",
       buildMode: params.MODE,
       branch: env.BRANCH_NAME)
 
-    INFRAPOOL_EXECUTORV2_AGENT_0.agentGet from: "${assetDirectory}/", to: "./"
+    infrapool.agentGet from: "${assetDirectory}/", to: "./"
     signArtifacts patterns: ["*.tar.gz"]
-    INFRAPOOL_EXECUTORV2_AGENT_0.agentPut from: "*.sig", to: "${assetDirectory}"
+    infrapool.agentPut from: "*.sig", to: "${assetDirectory}"
 
     // Pull existing images from internal registry in order to promote
     infrapool.agentSh """
       export PATH="release-tools/bin:${PATH}"
-      docker pull registry.tld/sidecar-injector:${sourceVersion}-${gitCommit(INFRAPOOL_EXECUTORV2_AGENT_0)}
+      docker pull registry.tld/sidecar-injector:${sourceVersion}-${gitCommit(infrapool)}
       # Promote source version to target version.
-      ./bin/publish --promote --source ${sourceVersion}-${gitCommit(INFRAPOOL_EXECUTORV2_AGENT_0)} --target ${targetVersion}
+      ./bin/publish --promote --source ${sourceVersion}-${gitCommit(infrapool)} --target ${targetVersion}
     """
     
     // Resolve ownership issue before promotion
