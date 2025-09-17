@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+set -eox pipefail
+
+function main() {
+  build_docker_junit_image
+  run_junit_report
+}
+
+function build_docker_junit_image() {
+  rm -f junit.xml
+  echo "Building junit image..."
+  docker build -f Dockerfile.junit -t sidecar-injector-junit:latest .
+}
+
+function run_junit_report() {
+  echo "Creating junit report and coverage output XML"
+  docker run --rm \
+    -v "$PWD"/:/test \
+    sidecar-injector-junit:latest \
+    bash -exc "
+      cat ./junit.output | go-junit-report > ./junit.xml ;
+      gocov convert ./c.out | gocov-xml > ./coverage.xml
+    "
+}
+
+main

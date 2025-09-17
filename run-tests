@@ -40,9 +40,6 @@ export SIDECAR_IMAGE='${SIDECAR_IMAGE}';
 }
 
 function main() {
-    announce 'Build Sidecar Injector Image'
-    ./bin/build latest
-
     docker inspect sidecar-injector:latest >/dev/null 2>&1 || {
         echo "ERROR: sidecar-injector:latest must exist locally for test to run."
         exit 1

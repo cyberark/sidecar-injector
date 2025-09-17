@@ -1,6 +1,7 @@
 #=============== Sidecar Injector Build Container ===================
 FROM golang:1.24 AS mutating-webhook-service-builder
 
+ARG VERSION="dev"
 ARG GIT_COMMIT_SHORT="dev"
 ARG KUBECTL_VERSION=1.34.0
 
@@ -36,7 +37,8 @@ COPY cmd ./cmd
 # The `gitCommitShort` override is there to provide the git commit information in the final
 # binary.
 RUN go build \
-    -ldflags="-X github.com/cyberark/sidecar-injector/pkg/version.gitCommitShort=$GIT_COMMIT_SHORT" \
+    -ldflags="-X github.com/cyberark/sidecar-injector/pkg/version.Version=$VERSION \
+              -X github.com/cyberark/sidecar-injector/pkg/version.Tag=$GIT_COMMIT_SHORT" \
     -o cyberark-sidecar-injector \
     ./cmd/sidecar-injector
 
