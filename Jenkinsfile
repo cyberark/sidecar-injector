@@ -261,13 +261,13 @@ pipeline {
 def gitCommit(infrapool) {
   infrapool.agentSh(
     returnStdout: true,
-    script: 'source ./bin/build_utils && echo "$(git_commit)"'
+    script: 'source ./bin/build_utils && echo -n "$(git_commit)"'
   )
 }
 
 def containerImageWithTag(infrapool) {
   infrapool.agentSh(
     returnStdout: true,
-    script: 'source ./bin/build_utils && echo "sidecar-injector:$(project_version_with_commit)"'
+    script: 'source ./bin/build_utils && echo -n "sidecar-injector:$(project_version_with_commit)"'
   )
 }
