@@ -56,7 +56,7 @@ object.
       - [conjur.org/conjurConnConfig](#conjurorgconjurconnconfig)
       - [conjur.org/conjurAuthConfig](#conjurorgconjurauthconfig)
   * [Secretless Sidecar Injection Example](#secretless-sidecar-injection-example)
-  * [Conjur Authenticator/Secretless/Secrets Provider Sidecar Injection Example](#conjur-authenticatorsecretless-sidecarsecrets-provider-injection-example)
+  * [Secrets Manager Authenticator/Secretless/Secrets Provider Sidecar Injection Example](#secrets-manager-authenticatorsecretless-sidecarsecrets-provider-injection-example)
     + [Deploy Authenticator Sidecar](#deploy-authenticator-sidecar)
     + [Deploy Secretless Sidecar](#deploy-secretless-sidecar)
   * [License](#license)
@@ -121,7 +121,7 @@ Injects:
   + **Volume Mounts** at `/conjur/secrets` and `/conjur/podinfo`
 
 Requires:
-  + a configMap in the namespace that the sidecar resides in. The config map can be the Golden config or the Conjur connect config map.
+  + a configMap in the namespace that the sidecar resides in. The config map can be the Golden config or the Secrets Manager connect config map.
   + The sidecar deployment manifest must include the conjur-connect configmap or the Golden configmap
 
 For example to add the Golden config to the sidecar manifest:
@@ -264,7 +264,7 @@ helm --namespace injectors \
  ./helm/cyberark-sidecar-injector/  --generate-name
 ```
 
-Optionally, if you want to specify the Secretless, Conjur Authenticator and/or 
+Optionally, if you want to specify the Secretless, Secrets Manager Authenticator and/or 
 Secrets Provider Docker image references, you can specify this in the `helm install` command:
 ```
 helm --namespace injectors \
@@ -339,8 +339,8 @@ default values.
 | -----------------------       | ---------------------------------------------   | ---------------------------------------------------------- |
 | `conjur.org/inject`| Enable the Sidecar Injector by setting to `true`            | `nil` (required) |
 | `conjur.org/secretless-config` | ConfigMap holding Secretless configuration               |  `nil` (required for secretless)  |
-| `conjur.org/conjurAuthConfig` | ConfigMap holding Conjur authentication configuration            |  `nil` (required for authenticator |
-| `conjur.org/conjurConnConfig` | ConfigMap holding Conjur connection configuration               |  `nil` (required for authenticator |
+| `conjur.org/conjurAuthConfig` | ConfigMap holding Secrets Manager authentication configuration            |  `nil` (required for authenticator |
+| `conjur.org/conjurConnConfig` | ConfigMap holding Secrets Manager connection configuration               |  `nil` (required for authenticator |
 | `conjur.org/inject-type` | Injected Sidecar type (`secretless`, `authenticator` or `secrets-provider`)                    |  `nil` (required) |
 | `conjur.org/conjur-inject-volumes` | Comma-separated list of the names of containers, in the pod, that will be injected with `conjur-access-token` or `conjur-secrets` and `conjur-status` VolumeMounts. (e.g. `app-container-1,app-container-2`)                  |  `nil` (applies to authenticator and secrets provider) |
 | `conjur.org/container-mode` | Sidecar Container mode (`init` or `sidecar`)                  | (secretless only supports sidecar) defaults to `sidecar` |
@@ -367,11 +367,11 @@ https://github.com/cyberark/secretless-broker/tree/main/resource-definitions).
 
 Expected to contain the following paths:
 
-+ CONJUR_VERSION - the version of your Conjur instance (4 or 5)
-+ CONJUR_APPLIANCE_URL - the URL of the Conjur appliance instance you are connecting to
++ CONJUR_VERSION - the version of your Secrets Manager instance (4 or 5)
++ CONJUR_APPLIANCE_URL - the URL of the Secrets Manager appliance instance you are connecting to
 + CONJUR_AUTHN_URL - the URL of the authenticator service endpoint
-+ CONJUR_ACCOUNT - the account name for the Conjur instance you are connecting to
-+ CONJUR_SSL_CERTIFICATE - the x509 certificate that was created when Conjur was initiated
++ CONJUR_ACCOUNT - the account name for the Secrets Manager instance you are connecting to
++ CONJUR_SSL_CERTIFICATE - the x509 certificate that was created when Secrets Manager was initiated
 
 #### conjur.org/conjurAuthConfig
 
@@ -515,17 +515,17 @@ to allow the cyberark-sidecar-injector to operate on pods created in this namesp
     ```
     
 
-## Conjur Authenticator/Secretless Sidecar/Secrets Provider Injection Example
+## Secrets Manager Authenticator/Secretless Sidecar/Secrets Provider Injection Example
 
 For this section, you'll work from a test namespace `$TEST_APP_NAMESPACE_NAME` (see
 below). Later you will label this namespace with `cyberark-sidecar-injector=enabled` so as
 to allow the cyberark-sidecar-injector to operate on pods created in this namespace.
 
-1. Setup a Conjur appliance running with the Kubernetes authenticator installed and
+1. Setup a Secrets Manager appliance running with the Kubernetes authenticator installed and
 enabled. e.g. run `./start` in
 [kubernetes-conjur-deploy](https://github.com/cyberark/kubernetes-conjur-deploy/)
 
-1. Load Conjur policy to create a host for the service account
+1. Load Secrets Manager policy to create a host for the service account
 `$TEST_APP_SERVICE_ACCOUNT`. e.g. `test-app-secretless` is made available by walking
 through [kubernetes-conjur-demo](https://github.com/conjurdemos/kubernetes-conjur-demo) up
 to and including `./3_init_conjur_cert_authority.sh`
@@ -549,7 +549,7 @@ to and including `./3_init_conjur_cert_authority.sh`
     export containerMode=sidecar
     ```
 
-1. Generate derived Conjur connection environment variables
+1. Generate derived Secrets Manager connection environment variables
     ```bash
     # derived values
     ## CONJUR_APPLIANCE_URL
@@ -600,18 +600,18 @@ to and including `./3_init_conjur_cert_authority.sh`
 1. Create service account (might already exist from `kubernetes-conjur-demo`) to be used
 by the application pod
     
-    This service account maps to the Conjur identity for the pod
+    This service account maps to the Secrets Manager identity for the pod
 
     ```bash
     ~$ kubectl -n ${TEST_APP_NAMESPACE_NAME} \
     create serviceaccount ${TEST_APP_SERVICE_ACCOUNT}
     ```
 
-1. Create Conjur ConfigMap
+1. Create Secrets Manager ConfigMap
 
-    This ConfigMap named `conjur` stores the connection details to the Conjur appliance. These
+    This ConfigMap named `conjur` stores the connection details to the Secrets Manager appliance. These
 details are necessary for both the **Authenticator** and **Secretless** sidecars to
-communicate with the Conjur appliance.
+communicate with the Secrets Manager appliance.
     ```bash
     ~$ cat << EOL | kubectl -n ${TEST_APP_NAMESPACE_NAME} apply -f -
     apiVersion: v1
@@ -629,7 +629,7 @@ communicate with the Conjur appliance.
     EOL
     ```
 
-1. You can now leverage Conjur by either
+1. You can now leverage Secrets Manager by either
    1. [Deploying the Authenticator Sidecar](#deploy-authenticator-sidecar) or
    2. [Deploying the Secretless Sidecar](#deploy-secretless-sidecar) or
    3. [Deploying the Secrets Provider Sidecar](#deploy-secrets-provider-sidecar)
@@ -641,9 +641,9 @@ communicate with the Conjur appliance.
     The **Authenticator Sidecar** is injected into the application pod on pod creation via the
 sidecar injector. The injection is configured via annotations. 
     
-    + The `conjur` ConfigMap is used for both Conjur Authentication and Connection configuration
+    + The `conjur` ConfigMap is used for both Secrets Manager Authentication and Connection configuration
     + The `conjur.org/container-name` is set to "secretless" because the
-corresponding Conjur identity to the service account used expects the sidecar container to
+corresponding Secrets Manager identity to the service account used expects the sidecar container to
 be named secretless.
 
     ```bash
@@ -689,7 +689,7 @@ be named secretless.
     container and read the contents of `/run/conjur/access-token`.
     
     The `/run/conjur/access-token` file contains the access token which is injected by the
-    **Authenticator** sidecar upon successful authentication against the Conjur appliance.
+    **Authenticator** sidecar upon successful authentication against the Secrets Manager appliance.
     Note that this file is volume mounted into the application pod's main container as a
     result of the annotation `conjur.org/conjur-token-receivers` being
     set to that container's name.
@@ -720,7 +720,7 @@ be named secretless.
    `basic_auth` authentication strategy that retrieves user and password using the
    `conjur` secret provider.
    
-   The username and password are set and stored within the Conjur appliance.
+   The username and password are set and stored within the Secrets Manager appliance.
    
     ```bash
     ~$ cat << EOL | kubectl -n ${TEST_APP_NAMESPACE_NAME} create configmap secretless --from-file=secretless.yml=/dev/stdin
@@ -750,7 +750,7 @@ be named secretless.
     The **Secretless Sidecar** is injected into the application pod on pod creation via
     the sidecar injector. The injection is configured via annotations.
     
-    + The `conjur` ConfigMap is used for both Conjur Authentication and Connection
+    + The `conjur` ConfigMap is used for both Secrets Manager Authentication and Connection
     configuration
     + The `secretless` ConfigMap is used as a source for Secretless configuration.
     ```bash
@@ -791,7 +791,7 @@ be named secretless.
     test-app                 2/2       Running       0          1m
     ```
 
-1. Test Secretless with Conjur
+1. Test Secretless with Secrets Manager
     
     In this step, you test Secretless by `exec`ing into the application pod's main
     container and issuing an HTTP request against the echo server proxied by Secretless.
@@ -878,7 +878,7 @@ be named secretless.
    container and read the file `/conjur/secrets/application.yaml`.
 
    The `/conjur/secrets/application.yaml` file contains the secrets that are injected by the
-   **Secrets Provider** sidecar upon successful authentication against the Conjur appliance.
+   **Secrets Provider** sidecar upon successful authentication against the Secrets Manager appliance.
    Note that this file is volume mounted into the application pod's main container as a
    result of the annotation `conjur.org/conjur-inject-volumes` being
    set to that container's name.
