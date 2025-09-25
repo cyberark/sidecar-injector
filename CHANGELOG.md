@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.0.1] - 2025-09-23
+
+### Changed
+- Updated documentation to align with Conjur Enterprise name change to Secrets Manager. (CNJR-10985)
+
 ## [1.0.0] - 2025-03-28
 
 ### Added
@@ -74,6 +79,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Ability to configure the sidecar container images by specifying flags on the sidecar
   injector binary [#29](https://github.com/cyberark/sidecar-injector/issues/29).
 
-[Unreleased]: https://github.com/cyberark/sidecar-injector/compare/v0.2.0...HEAD
-[0.2.0]: https://github.com/cyberark/sidecar-injector/compare/v0.1.0...v0.2.0
+[Unreleased]: https://github.com/cyberark/sidecar-injector/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/cyberark/sidecar-injector/compare/v1.0.0...v1.0.1
+[1.0.0]: https://github.com/cyberark/sidecar-injector/compare/v0.1.0...v1.0.0
 [0.1.0]: https://github.com/cyberark/sidecar-injector/releases/tag/v0.1.0
