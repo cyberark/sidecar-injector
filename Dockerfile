@@ -1,5 +1,5 @@
 #=============== Sidecar Injector Build Container ===================
-FROM golang:1.24 AS mutating-webhook-service-builder
+FROM golang:1.25 AS mutating-webhook-service-builder
 
 ARG VERSION="dev"
 ARG GIT_COMMIT_SHORT="dev"

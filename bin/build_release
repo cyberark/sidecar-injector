@@ -17,7 +17,7 @@ function build_binaries_and_archives() {
     # Use a GoReleaser Docker image containing cross-compilation tools
     # This image is recommended by the official GoReleaser docs
     # https://goreleaser.com/cookbooks/cgo-and-crosscompiling/
-    GORELEASER_IMAGE="goreleaser/goreleaser-cross:v1.24"
+    GORELEASER_IMAGE="goreleaser/goreleaser-cross:v1.25"
 
     # Get the version of Go specified by the "go directive" in go.mod
     # Grep it to avoid Go binary dependency
