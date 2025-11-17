@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 - Upgrade Go to 1.25 (CONJSE-2067)
+- Update kubectl to 1.34.2
 
 ## [1.0.1] - 2025-09-23
 
@@ -84,7 +85,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Ability to configure the sidecar container images by specifying flags on the sidecar
   injector binary [#29](https://github.com/cyberark/sidecar-injector/issues/29).
 
-[Unreleased]: https://github.com/cyberark/sidecar-injector/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/cyberark/sidecar-injector/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/cyberark/sidecar-injector/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/cyberark/sidecar-injector/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/cyberark/sidecar-injector/compare/v0.1.0...v1.0.0
 [0.1.0]: https://github.com/cyberark/sidecar-injector/releases/tag/v0.1.0

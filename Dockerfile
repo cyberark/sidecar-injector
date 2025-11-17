@@ -3,7 +3,7 @@ FROM golang:1.25 AS mutating-webhook-service-builder
 
 ARG VERSION="dev"
 ARG GIT_COMMIT_SHORT="dev"
-ARG KUBECTL_VERSION=1.34.0
+ARG KUBECTL_VERSION=1.34.2
 
 # On CyberArk dev laptops, golang module dependencies are downloaded with a
 # corporate proxy in the middle. For these connections to succeed we need to
