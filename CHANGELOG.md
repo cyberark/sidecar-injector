@@ -6,11 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [1.0.2] - 2025-11-03
+## [1.0.2] - 2025-12-10
 
 ### Changed
 - Upgrade Go to 1.25 (CONJSE-2067)
-- Update kubectl to 1.34.2
+- Update kubectl to 1.34.3
+- Update go dependencies
 
 ## [1.0.1] - 2025-09-23
 
