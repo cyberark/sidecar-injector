@@ -302,18 +302,21 @@ func HandleAdmissionRequest(
 		containerVolumeMounts := ContainerVolumeMounts{}
 
 		for _, receiveContainerName := range conjurInjectVolume {
-			containerVolumeMounts[receiveContainerName] = []corev1.VolumeMount{
+			mounts := []corev1.VolumeMount{
 				{
 					Name:      "conjur-status",
 					ReadOnly:  false,
 					MountPath: "/conjur/status",
 				},
-				{
+			}
+			if secretsDestination == "file" {
+				mounts = append(mounts, corev1.VolumeMount{
 					Name:      "conjur-secrets",
 					ReadOnly:  false,
 					MountPath: "/conjur/secrets",
-				},
+				})
 			}
+			containerVolumeMounts[receiveContainerName] = mounts
 		}
 		sidecarConfig.ContainerVolumeMounts = containerVolumeMounts
 	default:

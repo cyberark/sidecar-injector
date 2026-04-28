@@ -44,6 +44,30 @@ func TestSecretsProviderSidecarInjection(t *testing.T) {
 				"conjurSslCertificate":    "-----BEGIN CERTIFICATE-----tVw0ZnjsOV2ZeIBRalX/72RplPzkmWKAw==\n-----END CERTIFICATE-----\n",
 			},
 		},
+		{
+			description:                         "SecretsProvider k8s_secrets sidecar - no conjur-secrets volume injected",
+			annotatedPodTemplateSpecPath:        "./testdata/secrets-provider-k8s-annotated-pod.json",
+			expectedInjectedPodTemplateSpecPath: "./testdata/secrets-provider-k8s-mutated-pod.json",
+			env: map[string]string{
+				"CONJUR_ACCOUNT":          "myConjurAccount",
+				"CONJUR_APPLIANCE_URL":    "https://conjur-oss.conjur-oss.svc.cluster.local",
+				"CONJUR_AUTHENTICATOR_ID": "my-authenticator-id",
+				"CONJUR_AUTHN_URL":        "https://conjur-oss.conjur-oss.svc.cluster.local/authn-k8s/my-authenticator-id",
+				"CONJUR_SSL_CERTIFICATE":  "-----BEGIN CERTIFICATE-----tVw0ZnjsOV2ZeIBRalX/72RplPzkmWKAw==\n-----END CERTIFICATE-----\n",
+			},
+		},
+		{
+			description:                         "SecretsProvider k8s_secrets init - no conjur-secrets volume injected",
+			annotatedPodTemplateSpecPath:        "./testdata/secrets-provider-k8s-init-annotated-pod.json",
+			expectedInjectedPodTemplateSpecPath: "./testdata/secrets-provider-k8s-init-mutated-pod.json",
+			env: map[string]string{
+				"CONJUR_ACCOUNT":          "myConjurAccount",
+				"CONJUR_APPLIANCE_URL":    "https://conjur-oss.conjur-oss.svc.cluster.local",
+				"CONJUR_AUTHENTICATOR_ID": "my-authenticator-id",
+				"CONJUR_AUTHN_URL":        "https://conjur-oss.conjur-oss.svc.cluster.local/authn-k8s/my-authenticator-id",
+				"CONJUR_SSL_CERTIFICATE":  "-----BEGIN CERTIFICATE-----tVw0ZnjsOV2ZeIBRalX/72RplPzkmWKAw==\n-----END CERTIFICATE-----\n",
+			},
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
